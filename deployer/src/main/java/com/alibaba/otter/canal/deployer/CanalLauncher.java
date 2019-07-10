@@ -3,6 +3,9 @@ package com.alibaba.otter.canal.deployer;
 import java.io.FileInputStream;
 import java.util.Properties;
 
+import com.alibaba.otter.canal.instance.manager.CanalConfigClient;
+import com.alibaba.otter.canal.instance.manager.diamond.DiamondPropFetcher;
+import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,17 +33,21 @@ public class CanalLauncher {
             setGlobalUncaughtExceptionHandler();
 
             logger.info("## load canal configurations");
-            String conf = System.getProperty("canal.conf", "classpath:canal.properties");
-            Properties properties = new Properties();
-            if (conf.startsWith(CLASSPATH_URL_PREFIX)) {
+            /*if (conf.startsWith(CLASSPATH_URL_PREFIX)) {
                 conf = StringUtils.substringAfter(conf, CLASSPATH_URL_PREFIX);
                 properties.load(CanalLauncher.class.getClassLoader().getResourceAsStream(conf));
             } else {
                 properties.load(new FileInputStream(conf));
-            }
+            }*/
+
+            CanalConfigClient canalConfigClient = new CanalConfigClient();
+            DiamondPropFetcher diamondPropFetcher = new DiamondPropFetcher(canalConfigClient);
+            diamondPropFetcher.start();
+
+            CanalCoreParameter parameter = canalConfigClient.getCoreConfig();
 
             CanalMQProducer canalMQProducer = null;
-            String serverMode = CanalController.getProperty(properties, CanalConstants.CANAL_SERVER_MODE);
+            String serverMode = parameter.getServerMode(); //CanalController.getProperty(properties, CanalConstants.CANAL_SERVER_MODE);
             if (serverMode.equalsIgnoreCase("kafka")) {
                 canalMQProducer = new CanalKafkaProducer();
             } else if (serverMode.equalsIgnoreCase("rocketmq")) {
@@ -53,11 +60,12 @@ public class CanalLauncher {
             }
 
             logger.info("## start the canal server.");
-            final CanalController controller = new CanalController(properties);
+            final CanalController controller = new CanalController(parameter, canalConfigClient);
             controller.start();
             logger.info("## the canal server is running now ......");
             Runtime.getRuntime().addShutdownHook(new Thread() {
 
+                @Override
                 public void run() {
                     try {
                         logger.info("## stop the canal server");
@@ -73,7 +81,7 @@ public class CanalLauncher {
 
             if (canalMQProducer != null) {
                 CanalMQStarter canalMQStarter = new CanalMQStarter(canalMQProducer);
-                MQProperties mqProperties = buildMQPosition(properties);
+                MQProperties mqProperties = buildMQPosition(parameter);
                 canalMQStarter.start(mqProperties);
                 controller.setCanalMQStarter(canalMQStarter);
             }
@@ -83,58 +91,58 @@ public class CanalLauncher {
         }
     }
 
-    private static MQProperties buildMQPosition(Properties properties) {
+    private static MQProperties buildMQPosition(CanalCoreParameter parameter) {
         MQProperties mqProperties = new MQProperties();
-        String servers = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_SERVERS);
+        String servers = parameter.getMqServers(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_SERVERS);
         if (!StringUtils.isEmpty(servers)) {
             mqProperties.setServers(servers);
         }
-        String retires = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_RETRIES);
+        String retires = parameter.getMqRetries(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_RETRIES);
         if (!StringUtils.isEmpty(retires)) {
             mqProperties.setRetries(Integer.valueOf(retires));
         }
-        String batchSize = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_BATCHSIZE);
+        String batchSize = parameter.getMqBatchSize(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_BATCHSIZE);
         if (!StringUtils.isEmpty(batchSize)) {
             mqProperties.setBatchSize(Integer.valueOf(batchSize));
         }
-        String lingerMs = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_LINGERMS);
+        String lingerMs = parameter.getMqLingerMs(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_LINGERMS);
         if (!StringUtils.isEmpty(lingerMs)) {
             mqProperties.setLingerMs(Integer.valueOf(lingerMs));
         }
-        String maxRequestSize = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_MAXREQUESTSIZE);
+        String maxRequestSize = parameter.getMqMaxRequestSize(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_MAXREQUESTSIZE);
         if (!StringUtils.isEmpty(maxRequestSize)) {
             mqProperties.setMaxRequestSize(Integer.valueOf(maxRequestSize));
         }
-        String bufferMemory = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_BUFFERMEMORY);
+        String bufferMemory = parameter.getMqBufferMemory(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_BUFFERMEMORY);
         if (!StringUtils.isEmpty(bufferMemory)) {
             mqProperties.setBufferMemory(Long.valueOf(bufferMemory));
         }
-        String canalBatchSize = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_CANALBATCHSIZE);
+        String canalBatchSize = parameter.getMqCanalBatchSize(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_CANALBATCHSIZE);
         if (!StringUtils.isEmpty(canalBatchSize)) {
             mqProperties.setCanalBatchSize(Integer.valueOf(canalBatchSize));
         }
-        String canalGetTimeout = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_CANALGETTIMEOUT);
+        String canalGetTimeout = parameter.getMqCanalGetTimeout(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_CANALGETTIMEOUT);
         if (!StringUtils.isEmpty(canalGetTimeout)) {
             mqProperties.setCanalGetTimeout(Long.valueOf(canalGetTimeout));
         }
-        String flatMessage = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_FLATMESSAGE);
+        String flatMessage = parameter.getMqFlatMessage(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_FLATMESSAGE);
         if (!StringUtils.isEmpty(flatMessage)) {
             mqProperties.setFlatMessage(Boolean.valueOf(flatMessage));
         }
-        String compressionType = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_COMPRESSION_TYPE);
+        String compressionType = parameter.getMqCompressionType(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_COMPRESSION_TYPE);
         if (!StringUtils.isEmpty(compressionType)) {
             mqProperties.setCompressionType(compressionType);
         }
-        String acks = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_ACKS);
+        String acks = parameter.getMqAcks(); //CanalController.getProperty(properties, CanalConstants.CANAL_MQ_ACKS);
         if (!StringUtils.isEmpty(acks)) {
             mqProperties.setAcks(acks);
         }
 
-        String aliyunAccessKey = CanalController.getProperty(properties, CanalConstants.CANAL_ALIYUN_ACCESSKEY);
+        String aliyunAccessKey = parameter.getAliyunAccessKey(); //CanalController.getProperty(properties, CanalConstants.CANAL_ALIYUN_ACCESSKEY);
         if (!StringUtils.isEmpty(aliyunAccessKey)) {
             mqProperties.setAliyunAccessKey(aliyunAccessKey);
         }
-        String aliyunSecretKey = CanalController.getProperty(properties, CanalConstants.CANAL_ALIYUN_SECRETKEY);
+        String aliyunSecretKey = parameter.getAliuyunSecretKey(); //CanalController.getProperty(properties, CanalConstants.CANAL_ALIYUN_SECRETKEY);
         if (!StringUtils.isEmpty(aliyunSecretKey)) {
             mqProperties.setAliyunSecretKey(aliyunSecretKey);
         }

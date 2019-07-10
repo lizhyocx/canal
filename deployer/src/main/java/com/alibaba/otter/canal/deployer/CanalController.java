@@ -1,21 +1,5 @@
 package com.alibaba.otter.canal.deployer;
 
-import java.util.Map;
-import java.util.Properties;
-
-import org.I0Itec.zkclient.IZkStateListener;
-import org.I0Itec.zkclient.exception.ZkNoNodeException;
-import org.I0Itec.zkclient.exception.ZkNodeExistsException;
-import org.apache.commons.lang.BooleanUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import com.alibaba.otter.canal.common.CanalException;
 import com.alibaba.otter.canal.common.utils.AddressUtils;
 import com.alibaba.otter.canal.common.zookeeper.ZkClientx;
@@ -33,6 +17,7 @@ import com.alibaba.otter.canal.instance.core.CanalInstance;
 import com.alibaba.otter.canal.instance.core.CanalInstanceGenerator;
 import com.alibaba.otter.canal.instance.manager.CanalConfigClient;
 import com.alibaba.otter.canal.instance.manager.ManagerCanalInstanceGenerator;
+import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
 import com.alibaba.otter.canal.instance.spring.SpringCanalInstanceGenerator;
 import com.alibaba.otter.canal.parse.CanalEventParser;
 import com.alibaba.otter.canal.server.CanalMQStarter;
@@ -42,6 +27,20 @@ import com.alibaba.otter.canal.server.netty.CanalServerWithNetty;
 import com.google.common.base.Function;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.MigrateMap;
+import org.I0Itec.zkclient.IZkStateListener;
+import org.I0Itec.zkclient.exception.ZkNoNodeException;
+import org.I0Itec.zkclient.exception.ZkNodeExistsException;
+import org.apache.commons.lang.StringUtils;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * canal调度控制器
@@ -58,7 +57,7 @@ public class CanalController {
     // 默认使用spring的方式载入
     private Map<String, InstanceConfig>              instanceConfigs;
     private InstanceConfig                           globalInstanceConfig;
-    private Map<String, CanalConfigClient>           managerClients;
+    private CanalConfigClient                        canalConfigClient;
     // 监听instance config的变化
     private boolean                                  autoScan = true;
     private InstanceAction                           defaultAction;
@@ -72,30 +71,25 @@ public class CanalController {
     private CanalMQStarter                           canalMQStarter;
 
     public CanalController(){
-        this(System.getProperties());
+        this(new CanalCoreParameter(), new CanalConfigClient());
     }
 
-    public CanalController(final Properties properties){
-        managerClients = MigrateMap.makeComputingMap(new Function<String, CanalConfigClient>() {
+    public CanalController(final CanalCoreParameter parameter, final CanalConfigClient canalConfigClient){
 
-            public CanalConfigClient apply(String managerAddress) {
-                return getManagerClient(managerAddress);
-            }
-        });
-
+        this.canalConfigClient = canalConfigClient;
         // 初始化全局参数设置
-        globalInstanceConfig = initGlobalConfig(properties);
+        globalInstanceConfig = initGlobalConfig(parameter);
         instanceConfigs = new MapMaker().makeMap();
         // 初始化instance config
-        initInstanceConfig(properties);
+        initInstanceConfig(parameter);
 
         // init socketChannel
-        String socketChannel = getProperty(properties, CanalConstants.CANAL_SOCKETCHANNEL);
+        /*String socketChannel = getProperty(properties, CanalConstants.CANAL_SOCKETCHANNEL);
         if (StringUtils.isNotEmpty(socketChannel)) {
             System.setProperty(CanalConstants.CANAL_SOCKETCHANNEL, socketChannel);
-        }
+        }*/
 
-        // 兼容1.1.0版本的ak/sk参数名
+        /*// 兼容1.1.0版本的ak/sk参数名
         String accesskey = getProperty(properties, "canal.instance.rds.accesskey");
         String secretkey = getProperty(properties, "canal.instance.rds.secretkey");
         if (StringUtils.isNotEmpty(accesskey)) {
@@ -103,23 +97,24 @@ public class CanalController {
         }
         if (StringUtils.isNotEmpty(secretkey)) {
             System.setProperty(CanalConstants.CANAL_ALIYUN_SECRETKEY, secretkey);
-        }
+        }*/
 
         // 准备canal server
-        cid = Long.valueOf(getProperty(properties, CanalConstants.CANAL_ID));
-        ip = getProperty(properties, CanalConstants.CANAL_IP);
-        port = Integer.valueOf(getProperty(properties, CanalConstants.CANAL_PORT));
+        //cid = Long.valueOf(getProperty(properties, CanalConstants.CANAL_ID));
+        cid = parameter.getId();
+        ip = parameter.getIp(); //getProperty(properties, CanalConstants.CANAL_IP);
+        port = parameter.getPort(); //Integer.valueOf(getProperty(properties, CanalConstants.CANAL_PORT));
         embededCanalServer = CanalServerWithEmbedded.instance();
         embededCanalServer.setCanalInstanceGenerator(instanceGenerator);// 设置自定义的instanceGenerator
         try {
-            int metricsPort = Integer.valueOf(getProperty(properties, CanalConstants.CANAL_METRICS_PULL_PORT));
+            int metricsPort = parameter.getMetricsPullPort(); //Integer.valueOf(getProperty(properties, CanalConstants.CANAL_METRICS_PULL_PORT));
             embededCanalServer.setMetricsPort(metricsPort);
         } catch (NumberFormatException e) {
             logger.info("No valid metrics server port found, use default 11112.");
             embededCanalServer.setMetricsPort(11112);
         }
 
-        String canalWithoutNetty = getProperty(properties, CanalConstants.CANAL_WITHOUT_NETTY);
+        String canalWithoutNetty = parameter.getWithoutNetty(); //getProperty(properties, CanalConstants.CANAL_WITHOUT_NETTY);
         if (canalWithoutNetty == null || "false".equals(canalWithoutNetty)) {
             canalServer = CanalServerWithNetty.instance();
             canalServer.setIp(ip);
@@ -130,7 +125,7 @@ public class CanalController {
         if (StringUtils.isEmpty(ip)) {
             ip = AddressUtils.getHostIp();
         }
-        final String zkServers = getProperty(properties, CanalConstants.CANAL_ZKSERVERS);
+        final String zkServers = parameter.getZkServers(); //getProperty(properties, CanalConstants.CANAL_ZKSERVERS);
         if (StringUtils.isNotEmpty(zkServers)) {
             zkclientx = ZkClientx.getZkClient(zkServers);
             // 初始化系统目录
@@ -142,11 +137,13 @@ public class CanalController {
         ServerRunningMonitors.setServerData(serverData);
         ServerRunningMonitors.setRunningMonitors(MigrateMap.makeComputingMap(new Function<String, ServerRunningMonitor>() {
 
+            @Override
             public ServerRunningMonitor apply(final String destination) {
                 ServerRunningMonitor runningMonitor = new ServerRunningMonitor(serverData);
                 runningMonitor.setDestination(destination);
                 runningMonitor.setListener(new ServerRunningListener() {
 
+                    @Override
                     public void processActiveEnter() {
                         try {
                             MDC.put(CanalConstants.MDC_DESTINATION, String.valueOf(destination));
@@ -156,6 +153,7 @@ public class CanalController {
                         }
                     }
 
+                    @Override
                     public void processActiveExit() {
                         try {
                             MDC.put(CanalConstants.MDC_DESTINATION, String.valueOf(destination));
@@ -165,6 +163,7 @@ public class CanalController {
                         }
                     }
 
+                    @Override
                     public void processStart() {
                         try {
                             if (zkclientx != null) {
@@ -173,10 +172,12 @@ public class CanalController {
                                 initCid(path);
                                 zkclientx.subscribeStateChanges(new IZkStateListener() {
 
+                                    @Override
                                     public void handleStateChanged(KeeperState state) throws Exception {
 
                                     }
 
+                                    @Override
                                     public void handleNewSession() throws Exception {
                                         initCid(path);
                                     }
@@ -192,6 +193,7 @@ public class CanalController {
                         }
                     }
 
+                    @Override
                     public void processStop() {
                         try {
                             MDC.put(CanalConstants.MDC_DESTINATION, String.valueOf(destination));
@@ -216,15 +218,16 @@ public class CanalController {
         }));
 
         // 初始化monitor机制
-        autoScan = BooleanUtils.toBoolean(getProperty(properties, CanalConstants.CANAL_AUTO_SCAN));
+        autoScan = parameter.getAutoScan(); //BooleanUtils.toBoolean(getProperty(properties, CanalConstants.CANAL_AUTO_SCAN));
         if (autoScan) {
             defaultAction = new InstanceAction() {
 
+                @Override
                 public void start(String destination) {
                     InstanceConfig config = instanceConfigs.get(destination);
                     if (config == null) {
                         // 重新读取一下instance config
-                        config = parseInstanceConfig(properties, destination);
+                        config = parseInstanceConfig(parameter, destination);
                         instanceConfigs.put(destination, config);
                     }
 
@@ -240,6 +243,7 @@ public class CanalController {
                     }
                 }
 
+                @Override
                 public void stop(String destination) {
                     // 此处的stop，代表强制退出，非HA机制，所以需要退出HA的monitor和配置信息
                     InstanceConfig config = instanceConfigs.remove(destination);
@@ -255,6 +259,7 @@ public class CanalController {
                     }
                 }
 
+                @Override
                 public void reload(String destination) {
                     // 目前任何配置变化，直接重启，简单处理
                     stop(destination);
@@ -264,15 +269,16 @@ public class CanalController {
 
             instanceConfigMonitors = MigrateMap.makeComputingMap(new Function<InstanceMode, InstanceConfigMonitor>() {
 
+                @Override
                 public InstanceConfigMonitor apply(InstanceMode mode) {
-                    int scanInterval = Integer.valueOf(getProperty(properties, CanalConstants.CANAL_AUTO_SCAN_INTERVAL));
+                    int scanInterval = parameter.getAutoScanInterval(); //Integer.valueOf(getProperty(properties, CanalConstants.CANAL_AUTO_SCAN_INTERVAL));
 
                     if (mode.isSpring()) {
                         SpringInstanceConfigMonitor monitor = new SpringInstanceConfigMonitor();
                         monitor.setScanIntervalInSecond(scanInterval);
                         monitor.setDefaultAction(defaultAction);
                         // 设置conf目录，默认是user.dir + conf目录组成
-                        String rootDir = getProperty(properties, CanalConstants.CANAL_CONF_DIR);
+                        String rootDir = parameter.getConfDir(); //getProperty(properties, CanalConstants.CANAL_CONF_DIR);
                         if (StringUtils.isEmpty(rootDir)) {
                             rootDir = "../conf";
                         }
@@ -285,7 +291,10 @@ public class CanalController {
                         }
                         return monitor;
                     } else if (mode.isManager()) {
-                        return new ManagerInstanceConfigMonitor();
+                        ManagerInstanceConfigMonitor monitor =  new ManagerInstanceConfigMonitor();
+                        monitor.setCanalConfigClient(canalConfigClient);
+                        monitor.setDefaultAction(defaultAction);
+                      return monitor;
                     } else {
                         throw new UnsupportedOperationException("unknow mode :" + mode + " for monitor");
                     }
@@ -294,31 +303,32 @@ public class CanalController {
         }
     }
 
-    private InstanceConfig initGlobalConfig(Properties properties) {
+    private InstanceConfig initGlobalConfig(CanalCoreParameter parameter) {
         InstanceConfig globalConfig = new InstanceConfig();
-        String modeStr = getProperty(properties, CanalConstants.getInstanceModeKey(CanalConstants.GLOBAL_NAME));
+        String modeStr = parameter.getInstanceGlobalMode(); //getProperty(properties, CanalConstants.getInstanceModeKey(CanalConstants.GLOBAL_NAME));
         if (StringUtils.isNotEmpty(modeStr)) {
             globalConfig.setMode(InstanceMode.valueOf(StringUtils.upperCase(modeStr)));
         }
 
-        String lazyStr = getProperty(properties, CanalConstants.getInstancLazyKey(CanalConstants.GLOBAL_NAME));
+        String lazyStr = parameter.getInstanceGlobalLazy(); //getProperty(properties, CanalConstants.getInstancLazyKey(CanalConstants.GLOBAL_NAME));
         if (StringUtils.isNotEmpty(lazyStr)) {
             globalConfig.setLazy(Boolean.valueOf(lazyStr));
         }
 
-        String managerAddress = getProperty(properties,
+        /*String managerAddress = getProperty(properties,
             CanalConstants.getInstanceManagerAddressKey(CanalConstants.GLOBAL_NAME));
         if (StringUtils.isNotEmpty(managerAddress)) {
             globalConfig.setManagerAddress(managerAddress);
-        }
+        }*/
 
-        String springXml = getProperty(properties, CanalConstants.getInstancSpringXmlKey(CanalConstants.GLOBAL_NAME));
+        String springXml = parameter.getInstanceGlobalSpringXml(); //getProperty(properties, CanalConstants.getInstancSpringXmlKey(CanalConstants.GLOBAL_NAME));
         if (StringUtils.isNotEmpty(springXml)) {
             globalConfig.setSpringXml(springXml);
         }
 
         instanceGenerator = new CanalInstanceGenerator() {
 
+            @Override
             public CanalInstance generate(String destination) {
                 InstanceConfig config = instanceConfigs.get(destination);
                 if (config == null) {
@@ -327,7 +337,7 @@ public class CanalController {
 
                 if (config.getMode().isManager()) {
                     ManagerCanalInstanceGenerator instanceGenerator = new ManagerCanalInstanceGenerator();
-                    instanceGenerator.setCanalConfigClient(managerClients.get(config.getManagerAddress()));
+                    instanceGenerator.setCanalConfigClient(canalConfigClient);
                     return instanceGenerator.generate(destination);
                 } else if (config.getMode().isSpring()) {
                     SpringCanalInstanceGenerator instanceGenerator = new SpringCanalInstanceGenerator();
@@ -364,12 +374,12 @@ public class CanalController {
         return applicationContext;
     }
 
-    private void initInstanceConfig(Properties properties) {
-        String destinationStr = getProperty(properties, CanalConstants.CANAL_DESTINATIONS);
+    private void initInstanceConfig(CanalCoreParameter parameter) {
+        String destinationStr = parameter.getDestinations(); //getProperty(properties, CanalConstants.CANAL_DESTINATIONS);
         String[] destinations = StringUtils.split(destinationStr, CanalConstants.CANAL_DESTINATION_SPLIT);
 
         for (String destination : destinations) {
-            InstanceConfig config = parseInstanceConfig(properties, destination);
+            InstanceConfig config = parseInstanceConfig(parameter, destination);
             InstanceConfig oldConfig = instanceConfigs.put(destination, config);
 
             if (oldConfig != null) {
@@ -378,25 +388,25 @@ public class CanalController {
         }
     }
 
-    private InstanceConfig parseInstanceConfig(Properties properties, String destination) {
+    private InstanceConfig parseInstanceConfig(CanalCoreParameter parameter, String destination) {
         InstanceConfig config = new InstanceConfig(globalInstanceConfig);
-        String modeStr = getProperty(properties, CanalConstants.getInstanceModeKey(destination));
+        String modeStr = parameter.getInstanceGlobalMode(); //getProperty(properties, CanalConstants.getInstanceModeKey(destination));
         if (!StringUtils.isEmpty(modeStr)) {
             config.setMode(InstanceMode.valueOf(StringUtils.upperCase(modeStr)));
         }
 
-        String lazyStr = getProperty(properties, CanalConstants.getInstancLazyKey(destination));
+        String lazyStr = parameter.getInstanceGlobalLazy(); //getProperty(properties, CanalConstants.getInstancLazyKey(destination));
         if (!StringUtils.isEmpty(lazyStr)) {
             config.setLazy(Boolean.valueOf(lazyStr));
         }
 
         if (config.getMode().isManager()) {
-            String managerAddress = getProperty(properties, CanalConstants.getInstanceManagerAddressKey(destination));
+            /*String managerAddress = getProperty(properties, CanalConstants.getInstanceManagerAddressKey(destination));
             if (StringUtils.isNotEmpty(managerAddress)) {
                 config.setManagerAddress(managerAddress);
-            }
+            }*/
         } else if (config.getMode().isSpring()) {
-            String springXml = getProperty(properties, CanalConstants.getInstancSpringXmlKey(destination));
+            String springXml = parameter.getInstanceGlobalSpringXml(); //getProperty(properties, CanalConstants.getInstancSpringXmlKey(destination));
             if (StringUtils.isNotEmpty(springXml)) {
                 config.setSpringXml(springXml);
             }
@@ -428,10 +438,12 @@ public class CanalController {
         if (zkclientx != null) {
             this.zkclientx.subscribeStateChanges(new IZkStateListener() {
 
+                @Override
                 public void handleStateChanged(KeeperState state) throws Exception {
 
                 }
 
+                @Override
                 public void handleNewSession() throws Exception {
                     initCid(path);
                 }

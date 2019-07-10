@@ -1,20 +1,21 @@
 package com.alibaba.otter.canal.server;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.util.CollectionUtils;
-
 import com.alibaba.otter.canal.instance.core.CanalInstance;
 import com.alibaba.otter.canal.instance.core.CanalInstanceGenerator;
 import com.alibaba.otter.canal.instance.manager.CanalInstanceWithManager;
 import com.alibaba.otter.canal.instance.manager.model.Canal;
+import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
+import com.alibaba.otter.canal.instance.manager.model.CanalInstanceParameter;
 import com.alibaba.otter.canal.parse.CanalEventParser;
 import com.alibaba.otter.canal.parse.CanalHASwitchable;
 import com.alibaba.otter.canal.protocol.ClientIdentity;
 import com.alibaba.otter.canal.protocol.Message;
 import com.alibaba.otter.canal.server.embedded.CanalServerWithEmbedded;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.util.CollectionUtils;
 
 public abstract class BaseCanalServerWithEmbededTest {
 
@@ -35,8 +36,10 @@ public abstract class BaseCanalServerWithEmbededTest {
         server.setCanalInstanceGenerator(new CanalInstanceGenerator() {
 
             public CanalInstance generate(String destination) {
-                Canal canal = buildCanal();
-                return new CanalInstanceWithManager(canal, FILTER);
+                //Canal canal = buildCanal();
+                CanalCoreParameter coreParameter = buildCore();
+                CanalInstanceParameter instanceParameter = buildInstance();
+                return new CanalInstanceWithManager(coreParameter, instanceParameter, null);
             }
         });
         server.start();
@@ -194,4 +197,8 @@ public abstract class BaseCanalServerWithEmbededTest {
     }
 
     abstract protected Canal buildCanal();
+
+    abstract protected CanalCoreParameter buildCore();
+
+    abstract protected CanalInstanceParameter buildInstance();
 }

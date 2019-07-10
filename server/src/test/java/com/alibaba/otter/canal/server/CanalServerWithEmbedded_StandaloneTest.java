@@ -4,6 +4,8 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 
 import com.alibaba.otter.canal.instance.manager.model.Canal;
+import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
+import com.alibaba.otter.canal.instance.manager.model.CanalInstanceParameter;
 import com.alibaba.otter.canal.instance.manager.model.CanalParameter;
 import com.alibaba.otter.canal.instance.manager.model.CanalParameter.HAMode;
 import com.alibaba.otter.canal.instance.manager.model.CanalParameter.IndexMode;
@@ -52,5 +54,15 @@ public class CanalServerWithEmbedded_StandaloneTest extends BaseCanalServerWithE
 
         canal.setCanalParameter(parameter);
         return canal;
+    }
+
+    @Override
+    protected CanalCoreParameter buildCore() {
+        return null;
+    }
+
+    @Override
+    protected CanalInstanceParameter buildInstance() {
+        return null;
     }
 }

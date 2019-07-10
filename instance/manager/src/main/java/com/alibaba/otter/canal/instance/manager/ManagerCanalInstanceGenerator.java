@@ -1,8 +1,10 @@
 package com.alibaba.otter.canal.instance.manager;
 
+import com.alibaba.otter.canal.common.zookeeper.ZkClientx;
 import com.alibaba.otter.canal.instance.core.CanalInstance;
 import com.alibaba.otter.canal.instance.core.CanalInstanceGenerator;
-import com.alibaba.otter.canal.instance.manager.model.Canal;
+import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
+import com.alibaba.otter.canal.instance.manager.model.CanalInstanceParameter;
 
 /**
  * 基于manager生成对应的{@linkplain CanalInstance}
@@ -14,10 +16,12 @@ public class ManagerCanalInstanceGenerator implements CanalInstanceGenerator {
 
     private CanalConfigClient canalConfigClient;
 
+    @Override
     public CanalInstance generate(String destination) {
-        Canal canal = canalConfigClient.findCanal(destination);
-        String filter = canalConfigClient.findFilter(destination);
-        return new CanalInstanceWithManager(canal, filter);
+        CanalInstanceParameter instanceParameter = canalConfigClient.findCanal(destination);
+        CanalCoreParameter coreParameter = canalConfigClient.getCoreConfig();
+        ZkClientx zkClientx = ZkClientx.getZkClient(canalConfigClient.getCoreConfig().getZkServers());
+        return new CanalInstanceWithManager(coreParameter, instanceParameter, zkClientx);
     }
 
     // ================ setter / getter ================

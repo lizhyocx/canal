@@ -16,5 +16,9 @@
 			<artifactId>canal.instance.core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.taobao.diamond</groupId>
+			<artifactId>diamond-client</artifactId>
+		</dependency>
 	</dependencies>
 </project>
