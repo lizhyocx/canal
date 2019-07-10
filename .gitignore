@@ -1,0 +1,23 @@
+/*/target/
+/*/*/target/
+/.settings
+
+*.settings
+logs/
+
+*.project
+*.class
+*.classpath
+*.jar
+*.war
+*.zip
+/target
+/build
+/bin
+src/main/webapp/WEB-INF/classes/
+src/main/webapp/WEB-INF/work/
+
+# idea
+.idea/
+target/
+*.iml
