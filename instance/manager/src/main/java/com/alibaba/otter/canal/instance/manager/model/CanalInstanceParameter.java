@@ -12,11 +12,11 @@ public class CanalInstanceParameter implements Serializable {
     @CanalField("canal.instance.name")
 	private String destination;
     @CanalField("canal.instance.sourcingType")
-    private String sourcingType;
+    private String sourcingType = "mysql";
     @CanalField("canal.instance.mysql.slaveId")
 	private Long mysqlSlaveId;
     @CanalField("canal.instance.gtidon")
-	private String gtidon;
+	private Boolean gtidon = false;
     @CanalField("canal.instance.rds.accesskey")
 	private String rdsAccesskey;
     @CanalField("canal.instance.rds.secretkey")
@@ -25,114 +25,100 @@ public class CanalInstanceParameter implements Serializable {
 	private String rdsInstanceId;
     @CanalField("canal.instance.master.address")
 	private String masterAddress;
-    @CanalField("canal.instance.master.journal.name")
-	private String masterJournalName;
     @CanalField("canal.instance.master.position")
 	private String masterPosition;
-    @CanalField("canal.instance.master.timestamp")
-    private String masterTimestamp;
     @CanalField("canal.instance.master.gtid")
-	private String masterGtid;
-    @CanalField("canal.instance.standby.address")
 	private String standbyAddress;
-    @CanalField("canal.instance.standby.journal.name")
-	private String standbyJournalName;
     @CanalField("canal.instance.standby.position")
 	private String standbyPosition;
-    @CanalField("canal.instance.standby.timestamp")
-	private String standbyTimestamp;
-    @CanalField("canal.instance.standby.gtid")
-	private String standbyGtid;
     @CanalField("canal.instance.dbUsername")
 	private String dbUsername;
     @CanalField("canal.instance.dbPassword")
 	private String dbPassword;
     @CanalField("canal.instance.connectionCharset")
-	private String connectionCharset;
+	private String connectionCharset = "UTF-8";
     @CanalField("canal.instance.defaultDatabaseName")
 	private String defaultDatabaseName;
     @CanalField("canal.instance.enableDruid")
-	private String enableDruid;
+	private Boolean enableDruid = false;
     @CanalField("canal.instance.pwdPublicKey")
 	private String pwdPublicKey;
     @CanalField("canal.instance.filter.regex")
-	private String filterRegex;
+	private String filterRegex = ".*\\..*";
     @CanalField("canal.instance.filter.black.regex")
 	private String filterBlackRegex;
     @CanalField("canal.mq.topic")
 	private String mqTopic;
     @CanalField("canal.mq.partition")
-	private String mqPartition;
+	private Integer mqPartition;
     @CanalField("canal.mq.partitionsNum")
-	private String mqPartitionsNum;
+	private Integer mqPartitionsNum;
     @CanalField("canal.mq.partitionHash")
 	private String mqPartitionHash;
     @CanalField(("canal.instance.storage.mode"))
-    private String storageMode;
+    private String storageMode = "memory";
     @CanalField("canal.instance.memory.buffer.size")
-	private Integer memoryBufferSize;
+	private Integer memoryBufferSize = 16384;
     @CanalField("canal.instance.memory.buffer.memunit")
-	private Integer memoryBufferMemunit;
+	private Integer memoryBufferMemunit = 1024;
     @CanalField("canal.instance.memory.batch.mode")
-	private String memoryBatchMode;
+	private String memoryBatchMode = "MEMSIZE";
     @CanalField("canal.instance.memory.rawEntry")
-	private Boolean memoryRawEntry;
+	private Boolean memoryRawEntry = true;
     @CanalField("canal.instance.storage.scavenge.mode")
-    private String storageScavengeMode;
+    private String storageScavengeMode = "ack";
     @CanalField("canal.instance.storage.scavenge.schedule")
     private String storageScangengeSchedule;
     @CanalField("canal.instance.detecting.enable")
-	private String detectionEnable;
+	private Boolean detectionEnable = false;
     @CanalField("canal.instance.detecting.sql")
-	private String detectingSql;
+	private String detectingSql = "select 1";
     @CanalField("canal.instance.detecting.interval.time")
-	private Integer detectingInvervalTime;
+	private Integer detectingInvervalTime = 3;
     @CanalField("canal.instance.ha.mode")
-    private String haMode;
+    private String haMode = "heartbeat";
     @CanalField("canal.instance.detecting.retry.threshold")
-	private Integer detectingRetryThreshold;
+	private Integer detectingRetryThreshold = 3;
     @CanalField("canal.instance.detecting.heartbeatHaEnable")
-	private Boolean detectingHeartbeatHaEnable;
+	private Boolean detectingHeartbeatHaEnable = false;
     @CanalField("canal.instance.transaction.size")
-	private Integer transactionSize;
+	private Integer transactionSize = 1024;
     @CanalField("canal.instance.fallbackIntervalInSeconds")
-	private Integer fallbackIntervalInSeconds;
+	private Integer fallbackIntervalInSeconds = 60;
     @CanalField("canal.instance.network.receiveBufferSize")
-	private Integer networkReceiveBufferSize;
+	private Integer networkReceiveBufferSize = 16384;
     @CanalField("canal.instance.network.sendBufferSize")
-	private Integer networkSendBufferSize;
+	private Integer networkSendBufferSize = 16384;
     @CanalField("canal.instance.network.soTimeout")
-	private Integer networkSoTimeout;
+	private Integer networkSoTimeout = 30;
     @CanalField("canal.instance.filter.druid.ddl")
-	private String filterDruidDdl;
+	private Boolean filterDruidDdl = true;
     @CanalField("canal.instance.filter.query.dcl")
-	private String filterQueryDcl;
+	private Boolean filterQueryDcl = false;
     @CanalField("canal.instance.filter.query.dml")
-	private String filterQueryDml;
+	private Boolean filterQueryDml = false;
     @CanalField("canal.instance.filter.query.ddl")
-	private String filterQueryddl;
+	private Boolean filterQueryddl = false;
     @CanalField("canal.instance.filter.table.error")
-	private Boolean filterTableError;
+	private Boolean filterTableError = false;
     @CanalField("canal.instance.filter.rows")
-	private String filterRows;
+	private Boolean filterRows = false;
     @CanalField("canal.instance.filter.transaction.entry")
-	private String filterTransactionEntry;
+	private Boolean filterTransactionEntry = false;
     @CanalField("canal.instance.binlog.format")
 	private String binlogFormat;
     @CanalField("canal.instance.binlog.image")
 	private String binlogImage;
     @CanalField("canal.instance.get.ddl.isolation")
-	private Boolean ddlIsolation;
+	private Boolean ddlIsolation = false;
     @CanalField("canal.instance.parser.parallel")
-	private String parserParallel;
+	private Boolean parserParallel = true;
     @CanalField("canal.instance.parser.parallelThreadSize")
-	private String parserParallelThreadSize;
+	private Integer parserParallelThreadSize = 16;
     @CanalField("canal.instance.parser.parallelBufferSize")
-	private String parserParallelBufferSize;
+	private Integer parserParallelBufferSize = 256;
     @CanalField("canal.instance.tsdb.enable")
-	private String tsdbEnable;
-    @CanalField("canal.instance.tsdb.dir")
-	private String tsdbDir;
+	private Boolean tsdbEnable = false;
     @CanalField("canal.instance.tsdb.url")
 	private String tsdbUrl;
     @CanalField("canal.instance.tsdb.dbUsername")
@@ -144,13 +130,13 @@ public class CanalInstanceParameter implements Serializable {
     @CanalField("canal.instance.tsdb.snapshot.expire")
 	private Integer tsdbSnapshotExpire;
     @CanalField("canal.instance.meta.mode")
-    private String metaMode;
+    private String metaMode = "mixed";
     @CanalField("canal.instance.meta.file.dataDir")
     private String metaFileDataDir;
     @CanalField("canal.instance.meta.file.flushPeriod")
     private Long metaFileFlushPeriod;
     @CanalField("canal.instance.position.index.mode")
-    private String positionIndexMode;
+    private String positionIndexMode = "failback";
 
     public String getDestination() {
         return destination;
@@ -176,11 +162,11 @@ public class CanalInstanceParameter implements Serializable {
         this.mysqlSlaveId = mysqlSlaveId;
     }
 
-    public String getGtidon() {
+    public Boolean getGtidon() {
         return gtidon;
     }
 
-    public void setGtidon(String gtidon) {
+    public void setGtidon(Boolean gtidon) {
         this.gtidon = gtidon;
     }
 
@@ -216,36 +202,12 @@ public class CanalInstanceParameter implements Serializable {
         this.masterAddress = masterAddress;
     }
 
-    public String getMasterJournalName() {
-        return masterJournalName;
-    }
-
-    public void setMasterJournalName(String masterJournalName) {
-        this.masterJournalName = masterJournalName;
-    }
-
     public String getMasterPosition() {
         return masterPosition;
     }
 
     public void setMasterPosition(String masterPosition) {
         this.masterPosition = masterPosition;
-    }
-
-    public String getMasterTimestamp() {
-        return masterTimestamp;
-    }
-
-    public void setMasterTimestamp(String masterTimestamp) {
-        this.masterTimestamp = masterTimestamp;
-    }
-
-    public String getMasterGtid() {
-        return masterGtid;
-    }
-
-    public void setMasterGtid(String masterGtid) {
-        this.masterGtid = masterGtid;
     }
 
     public String getStandbyAddress() {
@@ -256,36 +218,12 @@ public class CanalInstanceParameter implements Serializable {
         this.standbyAddress = standbyAddress;
     }
 
-    public String getStandbyJournalName() {
-        return standbyJournalName;
-    }
-
-    public void setStandbyJournalName(String standbyJournalName) {
-        this.standbyJournalName = standbyJournalName;
-    }
-
     public String getStandbyPosition() {
         return standbyPosition;
     }
 
     public void setStandbyPosition(String standbyPosition) {
         this.standbyPosition = standbyPosition;
-    }
-
-    public String getStandbyTimestamp() {
-        return standbyTimestamp;
-    }
-
-    public void setStandbyTimestamp(String standbyTimestamp) {
-        this.standbyTimestamp = standbyTimestamp;
-    }
-
-    public String getStandbyGtid() {
-        return standbyGtid;
-    }
-
-    public void setStandbyGtid(String standbyGtid) {
-        this.standbyGtid = standbyGtid;
     }
 
     public String getDbUsername() {
@@ -320,22 +258,6 @@ public class CanalInstanceParameter implements Serializable {
         this.defaultDatabaseName = defaultDatabaseName;
     }
 
-    public String getEnableDruid() {
-        return enableDruid;
-    }
-
-    public void setEnableDruid(String enableDruid) {
-        this.enableDruid = enableDruid;
-    }
-
-    public String getPwdPublicKey() {
-        return pwdPublicKey;
-    }
-
-    public void setPwdPublicKey(String pwdPublicKey) {
-        this.pwdPublicKey = pwdPublicKey;
-    }
-
     public String getFilterRegex() {
         return filterRegex;
     }
@@ -360,19 +282,19 @@ public class CanalInstanceParameter implements Serializable {
         this.mqTopic = mqTopic;
     }
 
-    public String getMqPartition() {
+    public Integer getMqPartition() {
         return mqPartition;
     }
 
-    public void setMqPartition(String mqPartition) {
+    public void setMqPartition(Integer mqPartition) {
         this.mqPartition = mqPartition;
     }
 
-    public String getMqPartitionsNum() {
+    public Integer getMqPartitionsNum() {
         return mqPartitionsNum;
     }
 
-    public void setMqPartitionsNum(String mqPartitionsNum) {
+    public void setMqPartitionsNum(Integer mqPartitionsNum) {
         this.mqPartitionsNum = mqPartitionsNum;
     }
 
@@ -440,11 +362,11 @@ public class CanalInstanceParameter implements Serializable {
         this.storageScangengeSchedule = storageScangengeSchedule;
     }
 
-    public String getDetectionEnable() {
+    public Boolean getDetectionEnable() {
         return detectionEnable;
     }
 
-    public void setDetectionEnable(String detectionEnable) {
+    public void setDetectionEnable(Boolean detectionEnable) {
         this.detectionEnable = detectionEnable;
     }
 
@@ -528,35 +450,35 @@ public class CanalInstanceParameter implements Serializable {
         this.networkSoTimeout = networkSoTimeout;
     }
 
-    public String getFilterDruidDdl() {
+    public Boolean getFilterDruidDdl() {
         return filterDruidDdl;
     }
 
-    public void setFilterDruidDdl(String filterDruidDdl) {
+    public void setFilterDruidDdl(Boolean filterDruidDdl) {
         this.filterDruidDdl = filterDruidDdl;
     }
 
-    public String getFilterQueryDcl() {
+    public Boolean getFilterQueryDcl() {
         return filterQueryDcl;
     }
 
-    public void setFilterQueryDcl(String filterQueryDcl) {
+    public void setFilterQueryDcl(Boolean filterQueryDcl) {
         this.filterQueryDcl = filterQueryDcl;
     }
 
-    public String getFilterQueryDml() {
+    public Boolean getFilterQueryDml() {
         return filterQueryDml;
     }
 
-    public void setFilterQueryDml(String filterQueryDml) {
+    public void setFilterQueryDml(Boolean filterQueryDml) {
         this.filterQueryDml = filterQueryDml;
     }
 
-    public String getFilterQueryddl() {
+    public Boolean getFilterQueryddl() {
         return filterQueryddl;
     }
 
-    public void setFilterQueryddl(String filterQueryddl) {
+    public void setFilterQueryddl(Boolean filterQueryddl) {
         this.filterQueryddl = filterQueryddl;
     }
 
@@ -568,19 +490,19 @@ public class CanalInstanceParameter implements Serializable {
         this.filterTableError = filterTableError;
     }
 
-    public String getFilterRows() {
+    public Boolean getFilterRows() {
         return filterRows;
     }
 
-    public void setFilterRows(String filterRows) {
+    public void setFilterRows(Boolean filterRows) {
         this.filterRows = filterRows;
     }
 
-    public String getFilterTransactionEntry() {
+    public Boolean getFilterTransactionEntry() {
         return filterTransactionEntry;
     }
 
-    public void setFilterTransactionEntry(String filterTransactionEntry) {
+    public void setFilterTransactionEntry(Boolean filterTransactionEntry) {
         this.filterTransactionEntry = filterTransactionEntry;
     }
 
@@ -608,44 +530,36 @@ public class CanalInstanceParameter implements Serializable {
         this.ddlIsolation = ddlIsolation;
     }
 
-    public String getParserParallel() {
+    public Boolean getParserParallel() {
         return parserParallel;
     }
 
-    public void setParserParallel(String parserParallel) {
+    public void setParserParallel(Boolean parserParallel) {
         this.parserParallel = parserParallel;
     }
 
-    public String getParserParallelThreadSize() {
+    public Integer getParserParallelThreadSize() {
         return parserParallelThreadSize;
     }
 
-    public void setParserParallelThreadSize(String parserParallelThreadSize) {
+    public void setParserParallelThreadSize(Integer parserParallelThreadSize) {
         this.parserParallelThreadSize = parserParallelThreadSize;
     }
 
-    public String getParserParallelBufferSize() {
+    public Integer getParserParallelBufferSize() {
         return parserParallelBufferSize;
     }
 
-    public void setParserParallelBufferSize(String parserParallelBufferSize) {
+    public void setParserParallelBufferSize(Integer parserParallelBufferSize) {
         this.parserParallelBufferSize = parserParallelBufferSize;
     }
 
-    public String getTsdbEnable() {
+    public Boolean getTsdbEnable() {
         return tsdbEnable;
     }
 
-    public void setTsdbEnable(String tsdbEnable) {
+    public void setTsdbEnable(Boolean tsdbEnable) {
         this.tsdbEnable = tsdbEnable;
-    }
-
-    public String getTsdbDir() {
-        return tsdbDir;
-    }
-
-    public void setTsdbDir(String tsdbDir) {
-        this.tsdbDir = tsdbDir;
     }
 
     public String getTsdbUrl() {

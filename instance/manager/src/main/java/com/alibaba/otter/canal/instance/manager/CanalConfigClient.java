@@ -97,13 +97,4 @@ public class CanalConfigClient {
             }
         }
     }
-
-    public static void main(String[] args) {
-        String str = "{\"canal.id\":\"1\",\"canal.ip\":\"\",\"canal.port\":\"11111\",\"canal.metrics.pull.port\":\"11113\",\"canal.zkServers\":\"10.100.12.68:2181\",\"canal.zookeeper.flush.period\":\"1000\",\"canal.withoutNetty\":\"false\",\"canal.serverMode\":\"tcp\",\"canal.file.data.dir\":\"\",\"canal.file.flush.period\":\"1000\",\"canal.aliyun.accesskey\":\"\",\"canal.aliyun.secretkey\":\"\",\"canal.destinations\":\"\",\"canal.conf.dir\":\"./deployer/src/main/resources\",\"canal.auto.scan\":\"true\",\"canal.auto.scan.interval\":\"5\",\"canal.instance.global.mode\":\"manager\",\"canal.instance.global.lazy\":\"false\",\"canal.mq.servers\":\"127.0.0.1:6667\",\"canal.mq.retries\":\"0\",\"canal.mq.batchSize\":\"16384\",\"canal.mq.maxRequestSize\":\"1048576\",\"canal.mq.lingerMs\":\"1\",\"canal.mq.bufferMemory\":\"33554432\",\"canal.mq.canalBatchSize\":\"50\",\"canal.mq.canalGetTimeout\":\"100\",\"canal.mq.flatMessage\":\"true\",\"canal.mq.compressionType\":\"none\",\"canal.mq.acks\":\"all\"}";
-
-        Map<String, String> map = JSON.parseObject(str, new TypeReference<Map<String, String>>(){});
-        CanalCoreParameter parameter = CanalFieldConvert.convert(CanalCoreParameter.class, map);
-        System.out.println(JSON.toJSONString(parameter));
-
-    }
 }

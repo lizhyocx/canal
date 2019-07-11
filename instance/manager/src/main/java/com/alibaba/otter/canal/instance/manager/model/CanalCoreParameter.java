@@ -15,21 +15,17 @@ public class CanalCoreParameter implements Serializable {
     @CanalField("canal.ip")
     private String ip;
     @CanalField("canal.port")
-    private Integer port;
+    private Integer port = 11111;
     @CanalField("canal.metrics.pull.port")
-    private Integer metricsPullPort;
+    private Integer metricsPullPort = 11112;
     @CanalField("canal.zkServers")
     private String zkServers;
     @CanalField("canal.zookeeper.flush.period")
-    private String zkFlushPeriod;
+    private String zkFlushPeriod = "1000";
     @CanalField("canal.withoutNetty")
-    private String withoutNetty;
+    private Boolean withoutNetty = false;
     @CanalField("canal.serverMode")
-    private String serverMode;
-    @CanalField("canal.file.data.dir")
-    private String fileDataDir;
-    @CanalField("canal.file.flush.period")
-    private String fileFlushPeriod;
+    private String serverMode = "tcp";
     @CanalField("canal.aliyun.accesskey")
     private String aliyunAccessKey;
     @CanalField("canal.aliyun.secretkey")
@@ -39,13 +35,13 @@ public class CanalCoreParameter implements Serializable {
     @CanalField("canal.conf.dir")
     private String confDir;
     @CanalField("canal.auto.scan")
-    private Boolean autoScan;
+    private Boolean autoScan = true;
     @CanalField("canal.auto.scan.interval")
-    private Integer autoScanInterval;
+    private Integer autoScanInterval = 5000;
     @CanalField("canal.instance.global.mode")
-    private String instanceGlobalMode;
+    private String instanceGlobalMode = "manager";
     @CanalField("canal.instance.global.lazy")
-    private String instanceGlobalLazy;
+    private Boolean instanceGlobalLazy = true;
     @CanalField("canal.instance.global.spring.xml")
     private String instanceGlobalSpringXml;
     @CanalField("canal.mq.servers")
@@ -119,11 +115,11 @@ public class CanalCoreParameter implements Serializable {
         this.zkFlushPeriod = zkFlushPeriod;
     }
 
-    public String getWithoutNetty() {
+    public Boolean getWithoutNetty() {
         return withoutNetty;
     }
 
-    public void setWithoutNetty(String withoutNetty) {
+    public void setWithoutNetty(Boolean withoutNetty) {
         this.withoutNetty = withoutNetty;
     }
 
@@ -133,22 +129,6 @@ public class CanalCoreParameter implements Serializable {
 
     public void setServerMode(String serverMode) {
         this.serverMode = serverMode;
-    }
-
-    public String getFileDataDir() {
-        return fileDataDir;
-    }
-
-    public void setFileDataDir(String fileDataDir) {
-        this.fileDataDir = fileDataDir;
-    }
-
-    public String getFileFlushPeriod() {
-        return fileFlushPeriod;
-    }
-
-    public void setFileFlushPeriod(String fileFlushPeriod) {
-        this.fileFlushPeriod = fileFlushPeriod;
     }
 
     public String getAliyunAccessKey() {
@@ -207,11 +187,11 @@ public class CanalCoreParameter implements Serializable {
         this.instanceGlobalMode = instanceGlobalMode;
     }
 
-    public String getInstanceGlobalLazy() {
+    public Boolean getInstanceGlobalLazy() {
         return instanceGlobalLazy;
     }
 
-    public void setInstanceGlobalLazy(String instanceGlobalLazy) {
+    public void setInstanceGlobalLazy(Boolean instanceGlobalLazy) {
         this.instanceGlobalLazy = instanceGlobalLazy;
     }
 

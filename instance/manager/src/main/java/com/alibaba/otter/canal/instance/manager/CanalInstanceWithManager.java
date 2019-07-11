@@ -7,6 +7,7 @@ import com.alibaba.otter.canal.common.utils.JsonUtils;
 import com.alibaba.otter.canal.common.zookeeper.ZkClientx;
 import com.alibaba.otter.canal.filter.aviater.AviaterRegexFilter;
 import com.alibaba.otter.canal.instance.core.AbstractCanalInstance;
+import com.alibaba.otter.canal.instance.core.CanalMQConfig;
 import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
 import com.alibaba.otter.canal.instance.manager.model.CanalInstanceParameter;
 import com.alibaba.otter.canal.meta.FileMixedMetaManager;
@@ -62,6 +63,14 @@ public class CanalInstanceWithManager extends AbstractCanalInstance {
         this.destination = instanceParameter.getDestination();
 
         logger.info("init CanalInstance for {}-{} with parameters:{},{}", canalId, destination, coreParameter, instanceParameter);
+
+        CanalMQConfig config = new CanalMQConfig();
+        config.setTopic(instanceParameter.getMqTopic());
+        config.setPartition(instanceParameter.getMqPartition());
+        config.setPartitionHash(instanceParameter.getMqPartitionHash());
+        config.setPartitionsNum(instanceParameter.getMqPartitionsNum());
+        this.mqConfig = config;
+
         // 初始化报警机制
         initAlarmHandler();
         // 初始化metaManager
@@ -166,7 +175,7 @@ public class CanalInstanceWithManager extends AbstractCanalInstance {
         }
 
         if (eventSink instanceof EntryEventSink) {
-            ((EntryEventSink) eventSink).setFilterTransactionEntry(false);
+            ((EntryEventSink) eventSink).setFilterTransactionEntry(instanceParameter.getFilterTransactionEntry());
             ((EntryEventSink) eventSink).setEventStore(getEventStore());
         }
         // if (StringUtils.isNotEmpty(filter)) {
@@ -267,8 +276,12 @@ public class CanalInstanceWithManager extends AbstractCanalInstance {
             mysqlEventParser.setDefaultConnectionTimeoutInSeconds(instanceParameter.getNetworkSoTimeout());
             mysqlEventParser.setSendBufferSize(instanceParameter.getNetworkSendBufferSize());
             mysqlEventParser.setReceiveBufferSize(instanceParameter.getNetworkReceiveBufferSize());
+
+            mysqlEventParser.setParallel(instanceParameter.getParserParallel());
+            mysqlEventParser.setParallelBufferSize(instanceParameter.getParserParallelBufferSize());
+            mysqlEventParser.setParallelThreadSize(instanceParameter.getParserParallelThreadSize());
             // 心跳检查参数
-            mysqlEventParser.setDetectingEnable(instanceParameter.getDetectingHeartbeatHaEnable());
+            mysqlEventParser.setDetectingEnable(instanceParameter.getDetectionEnable());
             mysqlEventParser.setDetectingSQL(instanceParameter.getDetectingSql());
             mysqlEventParser.setDetectingIntervalInSeconds(instanceParameter.getDetectingInvervalTime());
             // 数据库信息参数
@@ -278,7 +291,6 @@ public class CanalInstanceWithManager extends AbstractCanalInstance {
                     instanceParameter.getDbUsername(),
                     instanceParameter.getDbPassword(),
                     instanceParameter.getDefaultDatabaseName()));
-
                 if (dbAddresses.size() > 1) {
                     mysqlEventParser.setStandbyInfo(new AuthenticationInfo(dbAddresses.get(1),
                         instanceParameter.getDbUsername(),
@@ -288,21 +300,32 @@ public class CanalInstanceWithManager extends AbstractCanalInstance {
             }
 
             if (StringUtils.isNotBlank(instanceParameter.getMasterPosition())) {
-                EntryPosition masterPosition = JsonUtils.unmarshalFromString(instanceParameter.getMasterPosition(),
-                    EntryPosition.class);
-                // binlog位置参数
-                mysqlEventParser.setMasterPosition(masterPosition);
+                try {
+                    EntryPosition masterPosition = JsonUtils.unmarshalFromString(instanceParameter.getMasterPosition(),
+                            EntryPosition.class);
+                    // binlog位置参数
+                    mysqlEventParser.setMasterPosition(masterPosition);
 
-                if (StringUtils.isNotBlank(instanceParameter.getStandbyPosition())) {
-                    EntryPosition standbyPosition = JsonUtils.unmarshalFromString(instanceParameter.getStandbyPosition(),
-                        EntryPosition.class);
-                    mysqlEventParser.setStandbyPosition(standbyPosition);
+                    if (StringUtils.isNotBlank(instanceParameter.getStandbyPosition())) {
+                        EntryPosition standbyPosition = JsonUtils.unmarshalFromString(instanceParameter.getStandbyPosition(),
+                                EntryPosition.class);
+                        mysqlEventParser.setStandbyPosition(standbyPosition);
+                    }
+                } catch (Exception e) {
+                    logger.error("set position exception",e );
                 }
             }
             mysqlEventParser.setFallbackIntervalInSeconds(instanceParameter.getFallbackIntervalInSeconds());
             mysqlEventParser.setProfilingEnabled(false);
             mysqlEventParser.setFilterTableError(instanceParameter.getFilterTableError());
             mysqlEventParser.setIsGTIDMode(BooleanUtils.toBoolean(instanceParameter.getGtidon()));
+            mysqlEventParser.setUseDruidDdlFilter(instanceParameter.getFilterDruidDdl());
+            mysqlEventParser.setFilterQueryDcl(instanceParameter.getFilterQueryDcl());
+            mysqlEventParser.setFilterQueryDdl(instanceParameter.getFilterQueryddl());
+            mysqlEventParser.setFilterQueryDml(instanceParameter.getFilterQueryDml());
+            mysqlEventParser.setFilterRows(instanceParameter.getFilterRows());
+            mysqlEventParser.setSupportBinlogFormats(instanceParameter.getBinlogFormat());
+            mysqlEventParser.setSupportBinlogImages(instanceParameter.getBinlogImage());
             // tsdb
             if (instanceParameter.getTsdbSnapshotInterval() != null) {
                 mysqlEventParser.setTsdbSnapshotInterval(instanceParameter.getTsdbSnapshotInterval());

@@ -114,8 +114,8 @@ public class CanalController {
             embededCanalServer.setMetricsPort(11112);
         }
 
-        String canalWithoutNetty = parameter.getWithoutNetty(); //getProperty(properties, CanalConstants.CANAL_WITHOUT_NETTY);
-        if (canalWithoutNetty == null || "false".equals(canalWithoutNetty)) {
+        Boolean canalWithoutNetty = parameter.getWithoutNetty(); //getProperty(properties, CanalConstants.CANAL_WITHOUT_NETTY);
+        if (Boolean.FALSE.equals(canalWithoutNetty)) {
             canalServer = CanalServerWithNetty.instance();
             canalServer.setIp(ip);
             canalServer.setPort(port);
@@ -310,10 +310,8 @@ public class CanalController {
             globalConfig.setMode(InstanceMode.valueOf(StringUtils.upperCase(modeStr)));
         }
 
-        String lazyStr = parameter.getInstanceGlobalLazy(); //getProperty(properties, CanalConstants.getInstancLazyKey(CanalConstants.GLOBAL_NAME));
-        if (StringUtils.isNotEmpty(lazyStr)) {
-            globalConfig.setLazy(Boolean.valueOf(lazyStr));
-        }
+        Boolean lazy = parameter.getInstanceGlobalLazy(); //getProperty(properties, CanalConstants.getInstancLazyKey(CanalConstants.GLOBAL_NAME));
+        globalConfig.setLazy(lazy);
 
         /*String managerAddress = getProperty(properties,
             CanalConstants.getInstanceManagerAddressKey(CanalConstants.GLOBAL_NAME));
@@ -377,13 +375,14 @@ public class CanalController {
     private void initInstanceConfig(CanalCoreParameter parameter) {
         String destinationStr = parameter.getDestinations(); //getProperty(properties, CanalConstants.CANAL_DESTINATIONS);
         String[] destinations = StringUtils.split(destinationStr, CanalConstants.CANAL_DESTINATION_SPLIT);
+        if(destinations != null) {
+            for (String destination : destinations) {
+                InstanceConfig config = parseInstanceConfig(parameter, destination);
+                InstanceConfig oldConfig = instanceConfigs.put(destination, config);
 
-        for (String destination : destinations) {
-            InstanceConfig config = parseInstanceConfig(parameter, destination);
-            InstanceConfig oldConfig = instanceConfigs.put(destination, config);
-
-            if (oldConfig != null) {
-                logger.warn("destination:{} old config:{} has replace by new config:{}", destination, oldConfig, config);
+                if (oldConfig != null) {
+                    logger.warn("destination:{} old config:{} has replace by new config:{}", destination, oldConfig, config);
+                }
             }
         }
     }
@@ -395,10 +394,8 @@ public class CanalController {
             config.setMode(InstanceMode.valueOf(StringUtils.upperCase(modeStr)));
         }
 
-        String lazyStr = parameter.getInstanceGlobalLazy(); //getProperty(properties, CanalConstants.getInstancLazyKey(destination));
-        if (!StringUtils.isEmpty(lazyStr)) {
-            config.setLazy(Boolean.valueOf(lazyStr));
-        }
+        Boolean lazy = parameter.getInstanceGlobalLazy(); //getProperty(properties, CanalConstants.getInstancLazyKey(destination));
+        config.setLazy(lazy);
 
         if (config.getMode().isManager()) {
             /*String managerAddress = getProperty(properties, CanalConstants.getInstanceManagerAddressKey(destination));
