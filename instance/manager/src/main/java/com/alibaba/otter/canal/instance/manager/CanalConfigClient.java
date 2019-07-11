@@ -45,7 +45,7 @@ public class CanalConfigClient {
         return canalConfig;
     }
 
-    public void loadCoreConfig(String config) {
+    public synchronized void loadCoreConfig(String config) {
         logger.info("local canal core config:{}", config);
         if(StringUtils.isBlank(config)) {
             return;
@@ -66,7 +66,7 @@ public class CanalConfigClient {
         }
     }
 
-    public void loadInstanceConfig(String config) {
+    public synchronized void loadInstanceConfig(String config) {
         logger.info("local canal instance config:{}", config);
         if(StringUtils.isBlank(config)) {
             return;
@@ -90,6 +90,9 @@ public class CanalConfigClient {
             Map<String, String> parameter = entry.getValue();
             if(StringUtils.isNotBlank(destination) && parameter != null) {
                 CanalInstanceParameter instanceParameter = CanalFieldConvert.convert(CanalInstanceParameter.class, parameter);
+                if(StringUtils.isBlank(instanceParameter.getDestination())) {
+                    instanceParameter.setDestination(destination);
+                }
                 canalConfig.put(destination, instanceParameter);
             } else {
                 //canal有问题
