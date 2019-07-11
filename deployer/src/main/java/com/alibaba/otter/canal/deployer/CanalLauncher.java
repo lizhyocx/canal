@@ -1,20 +1,16 @@
 package com.alibaba.otter.canal.deployer;
 
-import java.io.FileInputStream;
-import java.util.Properties;
-
+import com.alibaba.otter.canal.common.MQProperties;
 import com.alibaba.otter.canal.instance.manager.CanalConfigClient;
 import com.alibaba.otter.canal.instance.manager.diamond.DiamondPropFetcher;
 import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.alibaba.otter.canal.common.MQProperties;
 import com.alibaba.otter.canal.kafka.CanalKafkaProducer;
 import com.alibaba.otter.canal.rocketmq.CanalRocketMQProducer;
 import com.alibaba.otter.canal.server.CanalMQStarter;
 import com.alibaba.otter.canal.spi.CanalMQProducer;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * canal独立版本启动的入口类

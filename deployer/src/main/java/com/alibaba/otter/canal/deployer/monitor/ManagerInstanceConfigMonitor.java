@@ -7,11 +7,9 @@ import com.alibaba.otter.canal.instance.manager.CanalConfigClient;
 import com.alibaba.otter.canal.instance.manager.model.CanalInstanceParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -70,6 +68,12 @@ public class ManagerInstanceConfigMonitor extends AbstractCanalLifeCycle impleme
     }
 
     public void judgeChange(Map<String, CanalInstanceParameter> canalMap) {
+        if(CollectionUtils.isEmpty(canalMap)) {
+            for(Map.Entry<String, InstanceAction> entry : actions.entrySet()) {
+                entry.getValue().stop(entry.getKey());
+            }
+            return;
+        }
         Iterator<Map.Entry<String, CanalInstanceParameter>> iter = canalMap.entrySet().iterator();
         while(iter.hasNext()) {
             Map.Entry<String, CanalInstanceParameter> entry = iter.next();
@@ -88,7 +92,7 @@ public class ManagerInstanceConfigMonitor extends AbstractCanalLifeCycle impleme
         }
         lastCanalMap = canalMap;
 
-        Set<String> destinations = actions.keySet();
+        List<String> destinations = new ArrayList<>(actions.keySet());
         for(String destination : destinations) {
             if(!canalMap.containsKey(destination)) {
                 InstanceAction action = actions.remove(destination);

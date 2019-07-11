@@ -27,7 +27,8 @@ public class DiamondPropFetcher {
     private CanalConfigClient canalConfigClient;
 
     private final String GROUP_ID = "onebcc-canal";
-    private final String DATA_ID = "com.yunzong.canal.instance.config.DiamondPropFetcher";
+    private final String CORE_DATA_ID = "com.yunzong.canal.instance.config.DiamondPropFetcher.Core";
+    private final String INSTANCE_DATA_ID = "com.yunzong.canal.instance.config.DiamondPropFetcher.Instance";
 
     public DiamondPropFetcher(CanalConfigClient canalConfigClient) {
 
@@ -38,7 +39,6 @@ public class DiamondPropFetcher {
         configure.setConfigServerAddress("ds.diamond.yunzong");
         configure.setConfigServerPort(10510);
         diamondSubscriber.setDiamondConfigure(configure);
-        diamondSubscriber.addDataId(DATA_ID, GROUP_ID);
         diamondSubscriber.start();
         logger.info("diamondPropFetcher start.");
     }
@@ -49,13 +49,14 @@ public class DiamondPropFetcher {
     }
 
     private void loadCoreConfig() {
+        String coreConfig = diamondSubscriber.getConfigureInfomation(CORE_DATA_ID, GROUP_ID, 15*1000);
         //主动拉取一次
-        canalConfigClient.loadCoreConfig("{\"canal.id\":\"1\",\"canal.ip\":\"\",\"canal.port\":\"11111\",\"canal.metrics.pull.port\":\"11113\",\"canal.zkServers\":\"10.100.12.68:2181\",\"canal.zookeeper.flush.period\":\"1000\",\"canal.withoutNetty\":\"false\",\"canal.serverMode\":\"tcp\",\"canal.file.data.dir\":\"\",\"canal.file.flush.period\":\"1000\",\"canal.aliyun.accesskey\":\"\",\"canal.aliyun.secretkey\":\"\",\"canal.destinations\":\"\",\"canal.conf.dir\":\"./deployer/src/main/resources\",\"canal.auto.scan\":\"true\",\"canal.auto.scan.interval\":\"5\",\"canal.instance.global.mode\":\"manager\",\"canal.instance.global.lazy\":\"false\",\"canal.mq.servers\":\"127.0.0.1:6667\",\"canal.mq.retries\":\"0\",\"canal.mq.batchSize\":\"16384\",\"canal.mq.maxRequestSize\":\"1048576\",\"canal.mq.lingerMs\":\"1\",\"canal.mq.bufferMemory\":\"33554432\",\"canal.mq.canalBatchSize\":\"50\",\"canal.mq.canalGetTimeout\":\"100\",\"canal.mq.flatMessage\":\"true\",\"canal.mq.compressionType\":\"none\",\"canal.mq.acks\":\"all\"}");
+        canalConfigClient.loadCoreConfig(coreConfig);
     }
 
     private void loadInstanceConfig() {
-
-        ((DefaultSubscriberListener)diamondSubscriber.getSubscriberListener()).addManagerListener(DATA_ID, GROUP_ID, new ManagerListener() {
+        diamondSubscriber.addDataId(INSTANCE_DATA_ID, GROUP_ID);
+        ((DefaultSubscriberListener)diamondSubscriber.getSubscriberListener()).addManagerListener(INSTANCE_DATA_ID, GROUP_ID, new ManagerListener() {
             @Override
             public Executor getExecutor() {
                 return null;
@@ -63,7 +64,7 @@ public class DiamondPropFetcher {
 
             @Override
             public void receiveConfigInfo(String configInfo) {
-                logger.info(DATA_ID + " receive config:{}", configInfo);
+                logger.info("instance receive config:{}", configInfo);
                 canalConfigClient.loadInstanceConfig(configInfo);
             }
         });

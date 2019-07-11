@@ -1,5 +1,6 @@
 package com.alibaba.otter.canal.instance.manager.model;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +57,7 @@ public class CanalFieldConvert {
             Field field = clazz.getDeclaredField(fieldName);
             return field;
         } catch (NoSuchFieldException e) {
-            logger.error("tryGetField exception", e);
+            logger.error("tryGetField exception:"+fieldName, e);
         }
         return null;
     }
@@ -69,14 +70,18 @@ public class CanalFieldConvert {
             } else if(Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType)) {
                 setMethod.invoke(instance, Boolean.valueOf(value));
             } else if(Long.class.isAssignableFrom(fieldType) || long.class.isAssignableFrom(fieldType)) {
-                setMethod.invoke(instance, Long.valueOf(value));
+                if(StringUtils.isNotBlank(value)) {
+                    setMethod.invoke(instance, Long.valueOf(value));
+                }
             } else if(Integer.class.isAssignableFrom(fieldType) || int.class.isAssignableFrom(fieldType)) {
-                setMethod.invoke(instance, Integer.valueOf(value));
+                if(StringUtils.isNotBlank(value)) {
+                    setMethod.invoke(instance, Integer.valueOf(value));
+                }
             } else {
                 throw new RuntimeException("unSupported type:"+field.getType().getSimpleName()+" "+field.getName());
             }
         } catch (Exception e) {
-            logger.error("trySetField exception", e);
+            logger.error("trySetField exception:" + field.getName(), e);
         }
 
     }

@@ -79,6 +79,7 @@ public class CanalConfigClient {
             logger.error("json parse exception", e);
             return;
         }
+        canalConfig.clear();
         if(CollectionUtils.isEmpty(map)) {
             return;
         }
