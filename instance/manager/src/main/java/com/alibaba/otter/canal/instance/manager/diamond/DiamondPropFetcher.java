@@ -6,6 +6,7 @@ import com.taobao.diamond.client.DiamondSubscriber;
 import com.taobao.diamond.client.impl.DefaultSubscriberListener;
 import com.taobao.diamond.client.impl.DiamondClientFactory;
 import com.taobao.diamond.manager.ManagerListener;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,18 +27,24 @@ public class DiamondPropFetcher {
 
     private CanalConfigClient canalConfigClient;
 
-    private final String GROUP_ID = "onebcc-canal";
+    private final String GROUP_ID = "canalx";
     private final String CORE_DATA_ID = "com.yunzong.canal.instance.config.DiamondPropFetcher.Core";
     private final String INSTANCE_DATA_ID = "com.yunzong.canal.instance.config.DiamondPropFetcher.Instance";
 
-    public DiamondPropFetcher(CanalConfigClient canalConfigClient) {
+    public DiamondPropFetcher(DiamondConfig diamondConfig, CanalConfigClient canalConfigClient) {
 
         this.canalConfigClient = canalConfigClient;
         configure = new DiamondConfigure();
-        configure.setDomainNameList(Arrays.asList("ds.diamond.yunzong"));
-        configure.setPort(10510);
-        configure.setConfigServerAddress("ds.diamond.yunzong");
-        configure.setConfigServerPort(10510);
+        configure.setAppName(diamondConfig.getAppName());
+        String host = diamondConfig.getDiamondHost();
+        if(StringUtils.isNotBlank(host)) {
+            String[] arrHost = host.split(",");
+            configure.setDomainNameList(Arrays.asList(arrHost));
+            configure.setConfigServerAddress(arrHost[0]);
+        }
+        configure.setPort(diamondConfig.getDiamondPort());
+        configure.setConfigServerPort(diamondConfig.getDiamondPort());
+
         diamondSubscriber.setDiamondConfigure(configure);
         diamondSubscriber.start();
         logger.info("diamondPropFetcher start.");

@@ -2,8 +2,10 @@ package com.alibaba.otter.canal.deployer;
 
 import com.alibaba.otter.canal.common.MQProperties;
 import com.alibaba.otter.canal.instance.manager.CanalConfigClient;
+import com.alibaba.otter.canal.instance.manager.diamond.DiamondConfig;
 import com.alibaba.otter.canal.instance.manager.diamond.DiamondPropFetcher;
 import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
+import com.alibaba.otter.canal.instance.manager.model.CanalFieldConvert;
 import com.alibaba.otter.canal.kafka.CanalKafkaProducer;
 import com.alibaba.otter.canal.rocketmq.CanalRocketMQProducer;
 import com.alibaba.otter.canal.server.CanalMQStarter;
@@ -11,6 +13,11 @@ import com.alibaba.otter.canal.spi.CanalMQProducer;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * canal独立版本启动的入口类
@@ -20,7 +27,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CanalLauncher {
 
-    private static final String CLASSPATH_URL_PREFIX = "classpath:";
+    private static final String APP_PROPERTY_PATH = "app.properties";
     private static final Logger logger               = LoggerFactory.getLogger(CanalLauncher.class);
 
     public static void main(String[] args) throws Throwable {
@@ -29,15 +36,24 @@ public class CanalLauncher {
             setGlobalUncaughtExceptionHandler();
 
             logger.info("## load canal configurations");
-            /*if (conf.startsWith(CLASSPATH_URL_PREFIX)) {
-                conf = StringUtils.substringAfter(conf, CLASSPATH_URL_PREFIX);
-                properties.load(CanalLauncher.class.getClassLoader().getResourceAsStream(conf));
-            } else {
-                properties.load(new FileInputStream(conf));
-            }*/
 
+            Properties properties = new Properties();
+            properties.load(CanalLauncher.class.getClassLoader().getResourceAsStream(APP_PROPERTY_PATH));
+            Map<String, String> appMap = new HashMap<>((Map)properties);
+
+            if(!CollectionUtils.isEmpty(appMap)) {
+                for(Map.Entry<String, String> entry : appMap.entrySet()) {
+                    String value = entry.getValue();
+                    if(value != null && value.startsWith("${") && value.endsWith("}")) {
+                        logger.warn("app.properties--> [{}={}] variable not illegal,use default value", entry.getKey(), value);
+                        entry.setValue(null);
+                    }
+                }
+            }
+
+            DiamondConfig diamondConfig = CanalFieldConvert.convert(DiamondConfig.class, appMap);
             CanalConfigClient canalConfigClient = new CanalConfigClient();
-            DiamondPropFetcher diamondPropFetcher = new DiamondPropFetcher(canalConfigClient);
+            DiamondPropFetcher diamondPropFetcher = new DiamondPropFetcher(diamondConfig, canalConfigClient);
             diamondPropFetcher.start();
 
             CanalCoreParameter parameter = canalConfigClient.getCoreConfig();

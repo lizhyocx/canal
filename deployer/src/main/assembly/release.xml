@@ -31,16 +31,20 @@
 		<fileSet>
 			<directory>./src/main/resources</directory>
 			<outputDirectory>/conf</outputDirectory>
-			<includes>
-				<include>**/*</include>
-			</includes>
-		</fileSet>
-		<fileSet>
-			<directory>target</directory>
-			<outputDirectory>logs</outputDirectory>
 			<excludes>
 				<exclude>**/*</exclude>
 			</excludes>
+			<includes>
+				<include>metrics/*</include>
+			</includes>
+		</fileSet>
+		<fileSet>
+			<directory>${project.build.outputDirectory}</directory>
+			<outputDirectory>/conf</outputDirectory>
+			<includes>
+				<include>app.properties</include>
+				<include>logback.xml</include>
+			</includes>
 		</fileSet>
 	</fileSets>
 	<dependencySets>
