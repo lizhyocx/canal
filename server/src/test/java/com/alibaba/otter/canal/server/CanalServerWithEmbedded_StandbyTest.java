@@ -3,6 +3,8 @@ package com.alibaba.otter.canal.server;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 
+import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
+import com.alibaba.otter.canal.instance.manager.model.CanalInstanceParameter;
 import org.I0Itec.zkclient.ZkClient;
 import org.junit.Before;
 
@@ -64,5 +66,15 @@ public class CanalServerWithEmbedded_StandbyTest extends BaseCanalServerWithEmbe
 
         canal.setCanalParameter(parameter);
         return canal;
+    }
+
+    @Override
+    protected CanalCoreParameter buildCore() {
+        return null;
+    }
+
+    @Override
+    protected CanalInstanceParameter buildInstance() {
+        return null;
     }
 }

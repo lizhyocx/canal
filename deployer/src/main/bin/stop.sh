@@ -11,7 +11,7 @@ case "`uname`" in
     	;;
 esac
 
-get_pid() {	
+get_pid() {
 	STR=$1
 	PID=$2
     if $cygwin; then

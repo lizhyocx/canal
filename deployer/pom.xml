@@ -27,6 +27,12 @@
 	</dependencies>
 	
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 		<plugins>
 			<!-- deploy模块的packaging通常是jar，如果项目中没有java 源代码或资源文件，加上这一段配置使项目能通过构建 -->
 			<plugin>
@@ -38,6 +44,7 @@
 					<excludes>
 						<exclude>**/logback.xml</exclude>
 						<exclude>**/canal.properties</exclude>
+						<exclude>**/app.properties</exclude>
 						<exclude>**/spring/**</exclude>
 						<exclude>**/example/**</exclude>
 						<exclude>**/mq.yml</exclude>
@@ -74,11 +81,14 @@
 				<activeByDefault>true</activeByDefault>
 				<property>
 					<name>env</name>
-					<value>!release</value>
+					<value>dev</value>
 				</property>
 			</activation>
 
 			<build>
+				<filters>
+					<filter>${basedir}/profile/env.properties.dev</filter>
+				</filters>
 				<plugins>
 					<plugin>
 						<artifactId>maven-assembly-plugin</artifactId>
@@ -87,8 +97,8 @@
 							<descriptors>
 								<descriptor>${basedir}/src/main/assembly/dev.xml</descriptor>
 							</descriptors>
-							<finalName>canal</finalName>
-							<outputDirectory>${project.build.directory}</outputDirectory>
+							<finalName>${project.artifactId}-${project.version}</finalName>
+							<outputDirectory>${project.parent.build.directory}</outputDirectory>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -97,15 +107,18 @@
 		</profile>
 
 		<profile>
-			<id>release</id>
+			<id>prod</id>
 			<activation>
 				<property>
 					<name>env</name>
-					<value>release</value>
+					<value>prod</value>
 				</property>
 			</activation>
 
 			<build>
+				<filters>
+					<filter>${basedir}/profile/env.properties.prod</filter>
+				</filters>
 				<plugins>
 					<plugin>
 						<artifactId>maven-assembly-plugin</artifactId>

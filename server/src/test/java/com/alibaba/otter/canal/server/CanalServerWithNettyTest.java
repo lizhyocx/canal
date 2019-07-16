@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 
+import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
+import com.alibaba.otter.canal.instance.manager.model.CanalInstanceParameter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,8 +55,10 @@ public class CanalServerWithNettyTest {
         embeddedServer.setCanalInstanceGenerator(new CanalInstanceGenerator() {
 
             public CanalInstance generate(String destination) {
-                Canal canal = buildCanal();
-                return new CanalInstanceWithManager(canal, FILTER);
+                //Canal canal = buildCanal();
+                CanalCoreParameter coreParameter = buildCore();
+                CanalInstanceParameter instanceParameter = buildInstance();
+                return new CanalInstanceWithManager(coreParameter, instanceParameter, null);
             }
         });
 
@@ -263,4 +267,13 @@ public class CanalServerWithNettyTest {
         canal.setCanalParameter(parameter);
         return canal;
     }
+
+    private CanalCoreParameter buildCore() {
+        return null;
+    }
+
+    private CanalInstanceParameter buildInstance() {
+        return null;
+    }
+
 }

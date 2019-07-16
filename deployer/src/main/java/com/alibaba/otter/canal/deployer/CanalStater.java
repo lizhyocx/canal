@@ -1,23 +1,19 @@
 package com.alibaba.otter.canal.deployer;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.alibaba.fastjson.TypeReference;
 import com.alibaba.otter.canal.common.MQProperties;
+import com.alibaba.otter.canal.common.utils.JsonUtils;
+import com.alibaba.otter.canal.instance.manager.CanalConfigClient;
+import com.alibaba.otter.canal.instance.manager.model.CanalCoreParameter;
 import com.alibaba.otter.canal.kafka.CanalKafkaProducer;
 import com.alibaba.otter.canal.rocketmq.CanalRocketMQProducer;
 import com.alibaba.otter.canal.server.CanalMQStarter;
 import com.alibaba.otter.canal.spi.CanalMQProducer;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * Canal server 启动类
@@ -40,8 +36,9 @@ public class CanalStater {
      * @param properties canal.properties 配置
      * @throws Throwable
      */
-    synchronized void start(Properties properties) throws Throwable {
-        String serverMode = CanalController.getProperty(properties, CanalConstants.CANAL_SERVER_MODE);
+    synchronized void start(CanalConfigClient canalConfigClient) throws Throwable {
+        CanalCoreParameter parameter = canalConfigClient.getCoreConfig();
+        String serverMode = parameter.getServerMode();
         if (serverMode.equalsIgnoreCase("kafka")) {
             canalMQProducer = new CanalKafkaProducer();
         } else if (serverMode.equalsIgnoreCase("rocketmq")) {
@@ -51,11 +48,12 @@ public class CanalStater {
         if (canalMQProducer != null) {
             // disable netty
             System.setProperty(CanalConstants.CANAL_WITHOUT_NETTY, "true");
-            String autoScan = CanalController.getProperty(properties, CanalConstants.CANAL_AUTO_SCAN);
             // 设置为raw避免ByteString->Entry的二次解析
             System.setProperty("canal.instance.memory.rawEntry", "false");
+
+            /*boolean autoScan = parameter.getAutoScan();
             if ("true".equals(autoScan)) {
-                String rootDir = CanalController.getProperty(properties, CanalConstants.CANAL_CONF_DIR);
+                String rootDir = parameter.getConfDir();
                 if (StringUtils.isEmpty(rootDir)) {
                     rootDir = "../conf";
                 }
@@ -63,6 +61,7 @@ public class CanalStater {
                 if (rootdir.exists()) {
                     File[] instanceDirs = rootdir.listFiles(new FileFilter() {
 
+                        @Override
                         public boolean accept(File pathname) {
                             String filename = pathname.getName();
                             return pathname.isDirectory() && !"spring".equalsIgnoreCase(filename);
@@ -81,13 +80,13 @@ public class CanalStater {
                     }
                 }
             } else {
-                String destinations = CanalController.getProperty(properties, CanalConstants.CANAL_DESTINATIONS);
+                String destinations = parameter.getDestinations();
                 System.setProperty(CanalConstants.CANAL_DESTINATIONS, destinations);
-            }
+            }*/
         }
 
         logger.info("## start the canal server.");
-        controller = new CanalController(properties);
+        controller = new CanalController(parameter, canalConfigClient);
         controller.start();
         logger.info("## the canal server is running now ......");
         shutdownThread = new Thread() {
@@ -109,7 +108,7 @@ public class CanalStater {
 
         if (canalMQProducer != null) {
             canalMQStarter = new CanalMQStarter(canalMQProducer);
-            MQProperties mqProperties = buildMQProperties(properties);
+            MQProperties mqProperties = buildMQProperties(parameter);
             canalMQStarter.start(mqProperties);
             controller.setCanalMQStarter(canalMQStarter);
         }
@@ -142,77 +141,74 @@ public class CanalStater {
      * @param properties canal.properties 配置
      * @return
      */
-    private static MQProperties buildMQProperties(Properties properties) {
+    private static MQProperties buildMQProperties(CanalCoreParameter parameter) {
         MQProperties mqProperties = new MQProperties();
-        String servers = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_SERVERS);
+        String servers = parameter.getMqServers();
         if (!StringUtils.isEmpty(servers)) {
             mqProperties.setServers(servers);
         }
-        String retires = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_RETRIES);
+        String retires = parameter.getMqRetries();
         if (!StringUtils.isEmpty(retires)) {
             mqProperties.setRetries(Integer.valueOf(retires));
         }
-        String batchSize = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_BATCHSIZE);
+        String batchSize = parameter.getMqBatchSize();
         if (!StringUtils.isEmpty(batchSize)) {
             mqProperties.setBatchSize(Integer.valueOf(batchSize));
         }
-        String lingerMs = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_LINGERMS);
+        String lingerMs = parameter.getMqLingerMs();
         if (!StringUtils.isEmpty(lingerMs)) {
             mqProperties.setLingerMs(Integer.valueOf(lingerMs));
         }
-        String maxRequestSize = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_MAXREQUESTSIZE);
+        String maxRequestSize = parameter.getMqMaxRequestSize();
         if (!StringUtils.isEmpty(maxRequestSize)) {
             mqProperties.setMaxRequestSize(Integer.valueOf(maxRequestSize));
         }
-        String bufferMemory = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_BUFFERMEMORY);
+        String bufferMemory = parameter.getMqBufferMemory();
         if (!StringUtils.isEmpty(bufferMemory)) {
             mqProperties.setBufferMemory(Long.valueOf(bufferMemory));
         }
-        String canalBatchSize = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_CANALBATCHSIZE);
+        String canalBatchSize = parameter.getMqCanalBatchSize();
         if (!StringUtils.isEmpty(canalBatchSize)) {
             mqProperties.setCanalBatchSize(Integer.valueOf(canalBatchSize));
         }
-        String canalGetTimeout = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_CANALGETTIMEOUT);
+        String canalGetTimeout = parameter.getMqCanalGetTimeout();
         if (!StringUtils.isEmpty(canalGetTimeout)) {
             mqProperties.setCanalGetTimeout(Long.valueOf(canalGetTimeout));
         }
-        String flatMessage = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_FLATMESSAGE);
+        String flatMessage = parameter.getMqFlatMessage();
         if (!StringUtils.isEmpty(flatMessage)) {
             mqProperties.setFlatMessage(Boolean.valueOf(flatMessage));
         }
-        String compressionType = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_COMPRESSION_TYPE);
+        String compressionType = parameter.getMqCompressionType();
         if (!StringUtils.isEmpty(compressionType)) {
             mqProperties.setCompressionType(compressionType);
         }
-        String acks = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_ACKS);
+        String acks = parameter.getMqAcks();
         if (!StringUtils.isEmpty(acks)) {
             mqProperties.setAcks(acks);
         }
-        String aliyunAccessKey = CanalController.getProperty(properties, CanalConstants.CANAL_ALIYUN_ACCESSKEY);
+        String aliyunAccessKey = parameter.getAliyunAccessKey();
         if (!StringUtils.isEmpty(aliyunAccessKey)) {
             mqProperties.setAliyunAccessKey(aliyunAccessKey);
         }
-        String aliyunSecretKey = CanalController.getProperty(properties, CanalConstants.CANAL_ALIYUN_SECRETKEY);
+        String aliyunSecretKey = parameter.getAliyunSecretKey();
         if (!StringUtils.isEmpty(aliyunSecretKey)) {
             mqProperties.setAliyunSecretKey(aliyunSecretKey);
         }
-        String transaction = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_TRANSACTION);
+        String transaction = parameter.getMqTransaction();
         if (!StringUtils.isEmpty(transaction)) {
             mqProperties.setTransaction(Boolean.valueOf(transaction));
         }
 
-        String producerGroup = CanalController.getProperty(properties, CanalConstants.CANAL_MQ_PRODUCERGROUP);
+        String producerGroup = parameter.getMqProducerGroup();
         if (!StringUtils.isEmpty(producerGroup)) {
             mqProperties.setProducerGroup(producerGroup);
         }
 
-        for (Object key : properties.keySet()) {
-            key = StringUtils.trim(key.toString());
-            if (((String) key).startsWith(CanalConstants.CANAL_MQ_PROPERTIES)) {
-                String value = CanalController.getProperty(properties, (String) key);
-                String subKey = ((String) key).substring(CanalConstants.CANAL_MQ_PROPERTIES.length() + 1);
-                mqProperties.getProperties().put(subKey, value);
-            }
+        String properties = parameter.getMqProperties();
+        if(!StringUtils.isEmpty(properties)) {
+            Map<String, String> map = JsonUtils.unmarshalFromString(properties, new TypeReference<Map<String, String>>(){});
+            mqProperties.getProperties().putAll(map);
         }
 
         return mqProperties;

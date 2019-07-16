@@ -1,15 +1,16 @@
 package com.alibaba.otter.canal.deployer;
 
-import java.io.FileInputStream;
-import java.util.Properties;
-
-import org.apache.commons.lang.StringUtils;
+import com.alibaba.otter.canal.instance.manager.CanalConfigClient;
+import com.alibaba.otter.canal.instance.manager.diamond.DiamondConfig;
+import com.alibaba.otter.canal.instance.manager.diamond.DiamondPropFetcher;
+import com.alibaba.otter.canal.instance.manager.model.CanalFieldConvert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 
-import com.alibaba.otter.canal.deployer.monitor.remote.RemoteConfigLoader;
-import com.alibaba.otter.canal.deployer.monitor.remote.RemoteConfigLoaderFactory;
-import com.alibaba.otter.canal.deployer.monitor.remote.RemoteCanalConfigMonitor;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * canal独立版本启动的入口类
@@ -19,7 +20,7 @@ import com.alibaba.otter.canal.deployer.monitor.remote.RemoteCanalConfigMonitor;
  */
 public class CanalLauncher {
 
-    private static final String    CLASSPATH_URL_PREFIX = "classpath:";
+    private static final String APP_PROPERTY_PATH = "app.properties";
     private static final Logger    logger               = LoggerFactory.getLogger(CanalLauncher.class);
     public static volatile boolean running              = false;
 
@@ -30,17 +31,22 @@ public class CanalLauncher {
             setGlobalUncaughtExceptionHandler();
 
             logger.info("## load canal configurations");
-            String conf = System.getProperty("canal.conf", "classpath:canal.properties");
+
             Properties properties = new Properties();
-            RemoteConfigLoader remoteConfigLoader = null;
-            if (conf.startsWith(CLASSPATH_URL_PREFIX)) {
-                conf = StringUtils.substringAfter(conf, CLASSPATH_URL_PREFIX);
-                properties.load(CanalLauncher.class.getClassLoader().getResourceAsStream(conf));
-            } else {
-                properties.load(new FileInputStream(conf));
+            properties.load(CanalLauncher.class.getClassLoader().getResourceAsStream(APP_PROPERTY_PATH));
+            Map<String, String> appMap = new HashMap<>((Map)properties);
+
+            if(!CollectionUtils.isEmpty(appMap)) {
+                for(Map.Entry<String, String> entry : appMap.entrySet()) {
+                    String value = entry.getValue();
+                    if(value != null && value.startsWith("${") && value.endsWith("}")) {
+                        logger.warn("app.properties--> [{}={}] variable not illegal,use default value", entry.getKey(), value);
+                        entry.setValue(null);
+                    }
+                }
             }
 
-            remoteConfigLoader = RemoteConfigLoaderFactory.getRemoteConfigLoader(properties);
+            /*remoteConfigLoader = RemoteConfigLoaderFactory.getRemoteConfigLoader(properties);
             if (remoteConfigLoader != null) {
                 // 加载远程canal.properties
                 Properties remoteConfig = remoteConfigLoader.loadRemoteConfig();
@@ -51,12 +57,33 @@ public class CanalLauncher {
                 } else {
                     remoteConfigLoader = null;
                 }
-            }
+            }*/
+
+
+
+            DiamondConfig diamondConfig = CanalFieldConvert.convert(DiamondConfig.class, appMap);
+            CanalConfigClient canalConfigClient = new CanalConfigClient();
+            DiamondPropFetcher diamondPropFetcher = new DiamondPropFetcher(diamondConfig, canalConfigClient);
+            diamondPropFetcher.start();
+
+
+            /*remoteConfigLoader = RemoteConfigLoaderFactory.getRemoteConfigLoader(properties);
+            if (remoteConfigLoader != null) {
+                // 加载远程canal.properties
+                Properties remoteConfig = remoteConfigLoader.loadRemoteConfig();
+                // 加载remote instance配置
+                remoteConfigLoader.loadRemoteInstanceConfigs();
+                if (remoteConfig != null) {
+                    properties = remoteConfig;
+                } else {
+                    remoteConfigLoader = null;
+                }
+            }*/
 
             final CanalStater canalStater = new CanalStater();
-            canalStater.start(properties);
+            canalStater.start(canalConfigClient);
 
-            if (remoteConfigLoader != null) {
+            /*if (remoteConfigLoader != null) {
                 remoteConfigLoader.startMonitor(new RemoteCanalConfigMonitor() {
 
                     @Override
@@ -70,15 +97,15 @@ public class CanalLauncher {
                         }
                     }
                 });
-            }
+            }*/
 
             while (running) {
                 Thread.sleep(1000);
             }
 
-            if (remoteConfigLoader != null) {
+            /*if (remoteConfigLoader != null) {
                 remoteConfigLoader.destroy();
-            }
+            }*/
         } catch (Throwable e) {
             logger.error("## Something goes wrong when starting up the canal Server:", e);
         }
