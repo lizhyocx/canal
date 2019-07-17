@@ -1,16 +1,5 @@
 package com.alibaba.otter.canal.sink.entry;
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
-
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.CanalEntry.Entry;
 import com.alibaba.otter.canal.protocol.CanalEntry.EntryType;
@@ -22,6 +11,16 @@ import com.alibaba.otter.canal.sink.exception.CanalSinkException;
 import com.alibaba.otter.canal.store.CanalEventStore;
 import com.alibaba.otter.canal.store.memory.MemoryEventStoreWithBuffer;
 import com.alibaba.otter.canal.store.model.Event;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
+
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * mysql binlog数据对象输出
@@ -35,7 +34,7 @@ public class EntryEventSink extends AbstractCanalEventSink<List<CanalEntry.Entry
     private static final int       maxFullTimes                  = 10;
     private CanalEventStore<Event> eventStore;
     protected boolean              filterTransactionEntry        = false;                                        // 是否需要尽可能过滤事务头/尾
-    protected boolean              filterEmtryTransactionEntry   = true;                                         // 是否需要过滤空的事务头/尾
+    protected boolean              filterEmptyTransactionEntry   = true;                                         // 是否需要过滤空的事务头/尾
     protected long                 emptyTransactionInterval      = 5 * 1000;                                     // 空的事务输出的频率
     protected long                 emptyTransctionThresold       = 8192;                                         // 超过8192个事务头，输出一个
 
@@ -43,6 +42,9 @@ public class EntryEventSink extends AbstractCanalEventSink<List<CanalEntry.Entry
     protected AtomicLong           lastTransactionCount          = new AtomicLong(0L);
     protected volatile long        lastEmptyTransactionTimestamp = 0L;
     protected AtomicLong           lastEmptyTransactionCount     = new AtomicLong(0L);
+
+    protected boolean              filterDeleteEntry             = false;                                        // 是否需要多虑删除事件（DELETE语句）
+
     protected AtomicLong           eventsSinkBlockingTime        = new AtomicLong(0L);
     protected boolean              raw;
 
@@ -109,6 +111,11 @@ public class EntryEventSink extends AbstractCanalEventSink<List<CanalEntry.Entry
                 }
             }
 
+            if(filterDeleteEntry && entry.getEntryType() == EntryType.ROWDATA &&
+                    entry.getHeader().getEventType() == CanalEntry.EventType.DELETE) {
+                continue;
+            }
+
             hasRowData |= (entry.getEntryType() == EntryType.ROWDATA);
             hasHeartBeat |= (entry.getEntryType() == EntryType.HEARTBEAT);
             Event event = new Event(new LogIdentity(remoteAddress, -1L), entry, raw);
@@ -120,7 +127,7 @@ public class EntryEventSink extends AbstractCanalEventSink<List<CanalEntry.Entry
             return doSink(events);
         } else {
             // 需要过滤的数据
-            if (filterEmtryTransactionEntry && !CollectionUtils.isEmpty(events)) {
+            if (filterEmptyTransactionEntry && !CollectionUtils.isEmpty(events)) {
                 long currentTimestamp = events.get(0).getExecuteTime();
                 // 基于一定的策略控制，放过空的事务头和尾，便于及时更新数据库位点，表明工作正常
                 if (Math.abs(currentTimestamp - lastEmptyTransactionTimestamp) > emptyTransactionInterval
@@ -211,8 +218,8 @@ public class EntryEventSink extends AbstractCanalEventSink<List<CanalEntry.Entry
         this.filterTransactionEntry = filterTransactionEntry;
     }
 
-    public void setFilterEmtryTransactionEntry(boolean filterEmtryTransactionEntry) {
-        this.filterEmtryTransactionEntry = filterEmtryTransactionEntry;
+    public void setFilterEmptyTransactionEntry(boolean filterEmptyTransactionEntry) {
+        this.filterEmptyTransactionEntry = filterEmptyTransactionEntry;
     }
 
     public void setEmptyTransactionInterval(long emptyTransactionInterval) {
@@ -227,4 +234,7 @@ public class EntryEventSink extends AbstractCanalEventSink<List<CanalEntry.Entry
         return eventsSinkBlockingTime;
     }
 
+    public void setFilterDeleteEntry(boolean filterDeleteEntry) {
+        this.filterDeleteEntry = filterDeleteEntry;
+    }
 }

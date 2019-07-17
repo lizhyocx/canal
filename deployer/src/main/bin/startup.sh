@@ -12,6 +12,7 @@ esac
 base=${bin_abs_path}/..
 canal_conf=$base/conf/app.properties
 logback_configurationFile=$base/conf/logback.xml
+canal_log_dir=/data/application/logs/canalx/canal
 export LANG=en_US.UTF-8
 export BASE=$base
 
@@ -20,8 +21,8 @@ if [ -f $base/bin/canal.pid ] ; then
     exit 1
 fi
 
-if [ ! -d $base/logs/canal ] ; then 
-	mkdir -p $base/logs/canal
+if [ ! -d $canal_log_dir ] ; then
+	mkdir -p $canal_log_dir
 fi
 
 ## set java path
@@ -94,7 +95,7 @@ then
 	echo LOG CONFIGURATION : $logback_configurationFile
 	echo canal conf : $canal_conf 
 	echo CLASSPATH :$CLASSPATH
-	$JAVA $JAVA_OPTS $JAVA_DEBUG_OPT $CANAL_OPTS -classpath .:$CLASSPATH com.alibaba.otter.canal.deployer.CanalLauncher 1>>/data/application/logs/canalx/canal/canal.log 2>&1 &
+	$JAVA $JAVA_OPTS $JAVA_DEBUG_OPT $CANAL_OPTS -classpath .:$CLASSPATH com.alibaba.otter.canal.deployer.CanalLauncher 1>>$canal_log_dir/canal.log 2>&1 &
 	echo $! > $base/bin/canal.pid 
 	
 	echo "cd to $current_path for continue"

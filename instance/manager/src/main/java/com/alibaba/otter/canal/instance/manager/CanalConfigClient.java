@@ -79,10 +79,12 @@ public class CanalConfigClient {
             logger.error("json parse exception", e);
             return;
         }
-        canalConfig.clear();
         if(CollectionUtils.isEmpty(map)) {
+            canalConfig = new HashMap<>();
             return;
         }
+        Map<String, CanalInstanceParameter> refreshMap = new HashMap<>();
+
         Iterator<Map.Entry<String, Map<String, String>>> iter = map.entrySet().iterator();
         while(iter.hasNext()) {
             Map.Entry<String, Map<String, String>> entry = iter.next();
@@ -93,11 +95,12 @@ public class CanalConfigClient {
                 if(StringUtils.isBlank(instanceParameter.getDestination())) {
                     instanceParameter.setDestination(destination);
                 }
-                canalConfig.put(destination, instanceParameter);
+                refreshMap.put(destination, instanceParameter);
             } else {
-                //canal有问题
+                //canal实例配置有问题
                 logger.warn("illegal canal config:{},{}", destination, parameter);
             }
         }
+        canalConfig = refreshMap;
     }
 }

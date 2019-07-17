@@ -39,11 +39,6 @@ public class CanalInstanceParameter implements Serializable {
 	private String connectionCharset = "UTF-8";
     @CanalField("canal.instance.defaultDatabaseName")
 	private String defaultDatabaseName;
-    @CanalField("canal.instance.enableDruid")
-	private Boolean enableDruid = false;
-    @CanalField("canal.instance.pwdPublicKey")
-	private String pwdPublicKey;
-    @CanalField("canal.instance.filter.regex")
 	private String filterRegex = ".*\\..*";
     @CanalField("canal.instance.filter.black.regex")
 	private String filterBlackRegex;
@@ -105,6 +100,8 @@ public class CanalInstanceParameter implements Serializable {
 	private Boolean filterRows = false;
     @CanalField("canal.instance.filter.transaction.entry")
 	private Boolean filterTransactionEntry = false;
+    @CanalField("canal.instance.filter.delete.entry")
+    private Boolean filterDeleteEntry = false;
     @CanalField("canal.instance.binlog.format")
 	private String binlogFormat;
     @CanalField("canal.instance.binlog.image")
@@ -504,6 +501,14 @@ public class CanalInstanceParameter implements Serializable {
 
     public void setFilterTransactionEntry(Boolean filterTransactionEntry) {
         this.filterTransactionEntry = filterTransactionEntry;
+    }
+
+    public Boolean getFilterDeleteEntry() {
+        return filterDeleteEntry;
+    }
+
+    public void setFilterDeleteEntry(Boolean filterDeleteEntry) {
+        this.filterDeleteEntry = filterDeleteEntry;
     }
 
     public String getBinlogFormat() {

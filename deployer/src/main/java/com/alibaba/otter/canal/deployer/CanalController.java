@@ -376,6 +376,9 @@ public class CanalController {
 
     private void initInstanceConfig(CanalCoreParameter parameter) {
         String destinationStr = parameter.getDestinations(); //getProperty(properties, CanalConstants.CANAL_DESTINATIONS);
+        if(StringUtils.isBlank(destinationStr)) {
+            return;
+        }
         String[] destinations = StringUtils.split(destinationStr, CanalConstants.CANAL_DESTINATION_SPLIT);
 
         for (String destination : destinations) {

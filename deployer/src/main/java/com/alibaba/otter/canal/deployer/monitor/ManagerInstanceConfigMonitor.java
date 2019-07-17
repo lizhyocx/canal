@@ -67,7 +67,7 @@ public class ManagerInstanceConfigMonitor extends AbstractCanalLifeCycle impleme
         actions.remove(destination);
     }
 
-    public void judgeChange(Map<String, CanalInstanceParameter> canalMap) {
+    private void judgeChange(Map<String, CanalInstanceParameter> canalMap) {
         if(CollectionUtils.isEmpty(canalMap)) {
             for(Map.Entry<String, InstanceAction> entry : actions.entrySet()) {
                 entry.getValue().stop(entry.getKey());

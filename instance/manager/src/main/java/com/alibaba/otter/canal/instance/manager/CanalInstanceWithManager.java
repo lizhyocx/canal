@@ -177,6 +177,7 @@ public class CanalInstanceWithManager extends AbstractCanalInstance {
         if (eventSink instanceof EntryEventSink) {
             ((EntryEventSink) eventSink).setFilterTransactionEntry(instanceParameter.getFilterTransactionEntry());
             ((EntryEventSink) eventSink).setEventStore(getEventStore());
+            ((EntryEventSink) eventSink).setFilterDeleteEntry(instanceParameter.getFilterDeleteEntry());
         }
         // if (StringUtils.isNotEmpty(filter)) {
         // AviaterRegexFilter aviaterFilter = new AviaterRegexFilter(filter);
