@@ -46,21 +46,6 @@ public class CanalLauncher {
                 }
             }
 
-            /*remoteConfigLoader = RemoteConfigLoaderFactory.getRemoteConfigLoader(properties);
-            if (remoteConfigLoader != null) {
-                // 加载远程canal.properties
-                Properties remoteConfig = remoteConfigLoader.loadRemoteConfig();
-                // 加载remote instance配置
-                remoteConfigLoader.loadRemoteInstanceConfigs();
-                if (remoteConfig != null) {
-                    properties = remoteConfig;
-                } else {
-                    remoteConfigLoader = null;
-                }
-            }*/
-
-
-
             DiamondConfig diamondConfig = CanalFieldConvert.convert(DiamondConfig.class, appMap);
             CanalConfigClient canalConfigClient = new CanalConfigClient();
             DiamondPropFetcher diamondPropFetcher = new DiamondPropFetcher(diamondConfig, canalConfigClient);
