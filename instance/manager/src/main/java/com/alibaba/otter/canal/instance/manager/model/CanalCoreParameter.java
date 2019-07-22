@@ -54,7 +54,7 @@ public class CanalCoreParameter implements Serializable {
     private String mqMaxRequestSize;
     @CanalField("canal.mq.lingerMs")
     private String mqLingerMs;
-    @CanalField("canal.mq.bufferSize")
+    @CanalField("canal.mq.bufferMemory")
     private String mqBufferMemory;
     @CanalField("canal.mq.canalBatchSize")
     private String mqCanalBatchSize;

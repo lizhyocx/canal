@@ -27,7 +27,7 @@ public class CanalInstanceParameter implements Serializable {
 	private String masterAddress;
     @CanalField("canal.instance.master.position")
 	private String masterPosition;
-    @CanalField("canal.instance.master.gtid")
+    @CanalField("canal.instance.standby.address")
 	private String standbyAddress;
     @CanalField("canal.instance.standby.position")
 	private String standbyPosition;
@@ -39,6 +39,7 @@ public class CanalInstanceParameter implements Serializable {
 	private String connectionCharset = "UTF-8";
     @CanalField("canal.instance.defaultDatabaseName")
 	private String defaultDatabaseName;
+    @CanalField("canal.instance.filter.regex")
 	private String filterRegex = ".*\\..*";
     @CanalField("canal.instance.filter.black.regex")
 	private String filterBlackRegex;
