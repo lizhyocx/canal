@@ -80,7 +80,7 @@
 	</logger>
 
 	<root level="${log.root.level}">
-		<appender-ref ref="STDOUT"/>
+		<!--<appender-ref ref="STDOUT"/>-->
 		<appender-ref ref="CANAL-ROOT" />
 	</root>
 </configuration>

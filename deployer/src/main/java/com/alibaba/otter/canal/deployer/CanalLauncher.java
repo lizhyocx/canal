@@ -3,11 +3,13 @@ package com.alibaba.otter.canal.deployer;
 import com.alibaba.otter.canal.instance.manager.CanalConfigClient;
 import com.alibaba.otter.canal.instance.manager.diamond.DiamondConfig;
 import com.alibaba.otter.canal.instance.manager.diamond.DiamondPropFetcher;
+import com.alibaba.otter.canal.instance.manager.model.Canal;
 import com.alibaba.otter.canal.instance.manager.model.CanalFieldConvert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -21,6 +23,7 @@ import java.util.Properties;
 public class CanalLauncher {
 
     private static final String APP_PROPERTY_PATH = "app.properties";
+    private static final String CANAL_PROPERTY_PATH = "canal.properties";
     private static final Logger    logger               = LoggerFactory.getLogger(CanalLauncher.class);
     public static volatile boolean running              = false;
 
@@ -33,7 +36,21 @@ public class CanalLauncher {
             logger.info("## load canal configurations");
 
             Properties properties = new Properties();
-            properties.load(CanalLauncher.class.getClassLoader().getResourceAsStream(APP_PROPERTY_PATH));
+            InputStream appInput = null;
+            try {
+                appInput = Canal.class.getClassLoader().getResourceAsStream(APP_PROPERTY_PATH);
+                if(appInput != null) {
+                    properties.load(appInput);
+                }
+            } catch (Exception e) {
+                logger.warn("load app.properties fail, {}", e.getMessage());
+            } finally {
+                if(appInput != null) {
+                    try {
+                        appInput.close();
+                    } catch (Exception e) {}
+                }
+            }
             Map<String, String> appMap = new HashMap<>((Map)properties);
 
             if(!CollectionUtils.isEmpty(appMap)) {
@@ -46,8 +63,26 @@ public class CanalLauncher {
                 }
             }
 
+            Properties localCanalProperties = new Properties();
+            InputStream canalInput = null;
+            try {
+                canalInput = CanalLauncher.class.getClassLoader().getResourceAsStream(CANAL_PROPERTY_PATH);
+                if(canalInput != null) {
+                    localCanalProperties.load(canalInput);
+                }
+            } catch (Exception e) {
+                logger.warn("load canal.properties fail, {}", e.getMessage());
+            } finally {
+                if(canalInput != null) {
+                    try {
+                        canalInput.close();
+                    } catch (Exception e) {}
+                }
+            }
+            Map<String, String> localCanalMap = new HashMap<>((Map) localCanalProperties);
+
             DiamondConfig diamondConfig = CanalFieldConvert.convert(DiamondConfig.class, appMap);
-            CanalConfigClient canalConfigClient = new CanalConfigClient();
+            CanalConfigClient canalConfigClient = new CanalConfigClient(localCanalMap);
             DiamondPropFetcher diamondPropFetcher = new DiamondPropFetcher(diamondConfig, canalConfigClient);
             diamondPropFetcher.start();
 
@@ -68,25 +103,9 @@ public class CanalLauncher {
             final CanalStater canalStater = new CanalStater();
             canalStater.start(canalConfigClient);
 
-            /*if (remoteConfigLoader != null) {
-                remoteConfigLoader.startMonitor(new RemoteCanalConfigMonitor() {
-
-                    @Override
-                    public void onChange(Properties properties) {
-                        try {
-                            // 远程配置canal.properties修改重新加载整个应用
-                            canalStater.destroy();
-                            canalStater.start(properties);
-                        } catch (Throwable throwable) {
-                            logger.error(throwable.getMessage(), throwable);
-                        }
-                    }
-                });
-            }*/
-
-            while (running) {
+            /*while (running) {
                 Thread.sleep(1000);
-            }
+            }*/
 
             /*if (remoteConfigLoader != null) {
                 remoteConfigLoader.destroy();

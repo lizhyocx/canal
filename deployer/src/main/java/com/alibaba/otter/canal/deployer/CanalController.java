@@ -365,10 +365,6 @@ public class CanalController {
         return globalConfig;
     }
 
-    private CanalConfigClient getManagerClient(String managerAddress) {
-        return new CanalConfigClient();
-    }
-
     private BeanFactory getBeanFactory(String springXml) {
         ApplicationContext applicationContext = new ClassPathXmlApplicationContext(springXml);
         return applicationContext;

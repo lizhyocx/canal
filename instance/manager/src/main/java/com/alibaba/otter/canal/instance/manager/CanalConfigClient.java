@@ -23,9 +23,19 @@ import java.util.Map;
 public class CanalConfigClient {
     private static final Logger logger   = LoggerFactory.getLogger(CanalConfigClient.class);
 
+    private Map<String, String> localCoreParameter;
+
     private Map<String, CanalInstanceParameter> canalConfig = new HashMap<>();
 
     private CanalCoreParameter canalCoreParameter;
+
+    public CanalConfigClient() {
+        this.localCoreParameter = new HashMap<>();
+    }
+
+    public CanalConfigClient(Map<String, String> localCoreParameter) {
+        this.localCoreParameter = localCoreParameter;
+    }
 
     /**
      * 根据对应的destinantion查询Canal信息
@@ -46,7 +56,7 @@ public class CanalConfigClient {
     }
 
     public synchronized void loadCoreConfig(String config) {
-        logger.info("local canal core config:{}", config);
+        logger.warn("local canal core config:{}", config);
         if(StringUtils.isBlank(config)) {
             return;
         }
@@ -56,6 +66,11 @@ public class CanalConfigClient {
         } catch (Exception e) {
             logger.error("parse config info exception", e);
             return;
+        }
+        if(map == null) {
+            map = localCoreParameter;
+        } else {
+            map.putAll(localCoreParameter);
         }
         if(CollectionUtils.isEmpty(map)) {
             return;
@@ -67,7 +82,7 @@ public class CanalConfigClient {
     }
 
     public synchronized void loadInstanceConfig(String config) {
-        logger.info("local canal instance config:{}", config);
+        logger.warn("local canal instance config:{}", config);
         if(StringUtils.isBlank(config)) {
             return;
         }
