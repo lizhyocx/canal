@@ -23,7 +23,7 @@ import java.util.Properties;
 public class CanalLauncher {
 
     private static final String APP_PROPERTY_PATH = "app.properties";
-    private static final String CANAL_PROPERTY_PATH = "canal.properties";
+    private static final String LOCAL_PROPERTY_PATH = "local.properties";
     private static final Logger    logger               = LoggerFactory.getLogger(CanalLauncher.class);
     public static volatile boolean running              = false;
 
@@ -64,18 +64,18 @@ public class CanalLauncher {
             }
 
             Properties localCanalProperties = new Properties();
-            InputStream canalInput = null;
+            InputStream localInput = null;
             try {
-                canalInput = CanalLauncher.class.getClassLoader().getResourceAsStream(CANAL_PROPERTY_PATH);
-                if(canalInput != null) {
-                    localCanalProperties.load(canalInput);
+                localInput = CanalLauncher.class.getClassLoader().getResourceAsStream(LOCAL_PROPERTY_PATH);
+                if(localInput != null) {
+                    localCanalProperties.load(localInput);
                 }
             } catch (Exception e) {
                 logger.warn("load canal.properties fail, {}", e.getMessage());
             } finally {
-                if(canalInput != null) {
+                if(localInput != null) {
                     try {
-                        canalInput.close();
+                        localInput.close();
                     } catch (Exception e) {}
                 }
             }
