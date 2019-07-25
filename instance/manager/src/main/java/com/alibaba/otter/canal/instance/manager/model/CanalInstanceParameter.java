@@ -112,7 +112,7 @@ public class CanalInstanceParameter implements Serializable {
     @CanalField("canal.instance.parser.parallel")
 	private Boolean parserParallel = true;
     @CanalField("canal.instance.parser.parallelThreadSize")
-	private Integer parserParallelThreadSize = 16;
+	private Integer parserParallelThreadSize;
     @CanalField("canal.instance.parser.parallelBufferSize")
 	private Integer parserParallelBufferSize = 256;
     @CanalField("canal.instance.tsdb.enable")
