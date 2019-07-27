@@ -15,9 +15,9 @@ public class DiamondConfig implements Serializable {
     @CanalField("application.name")
     private String appName = "canalx";
     @CanalField("diamond.server.host")
-    private String diamondHost = "diamond.yunzong";
+    private String diamondHost = "diamon.domain";
     @CanalField("diamond.server.port")
-    private Integer diamondPort = 10510;
+    private Integer diamondPort = 8080;
 
     public String getAppName() {
         return appName;

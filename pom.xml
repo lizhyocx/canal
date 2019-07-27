@@ -88,13 +88,6 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-        <repository>
-            <id>yunzong-repo</id>
-            <url>http://10.100.21.13:8081/nexus/content/groups/public/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
 
     </repositories>
 

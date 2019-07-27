@@ -28,8 +28,8 @@ public class DiamondPropFetcher {
     private CanalConfigClient canalConfigClient;
 
     private final String GROUP_ID = "canalx";
-    private final String CORE_DATA_ID = "com.yunzong.canal.instance.config.DiamondPropFetcher.Core";
-    private final String INSTANCE_DATA_ID = "com.yunzong.canal.instance.config.DiamondPropFetcher.Instance";
+    private final String CORE_DATA_ID = "com.otter.canal.instance.config.DiamondPropFetcher.Core";
+    private final String INSTANCE_DATA_ID = "com.otter.canal.instance.config.DiamondPropFetcher.Instance";
 
     public DiamondPropFetcher(DiamondConfig diamondConfig, CanalConfigClient canalConfigClient) {
 
